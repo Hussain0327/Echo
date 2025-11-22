@@ -1,287 +1,327 @@
-# What's Next? 🚀
+# What's Next
 
-**Current Status**: Phase 0 Complete ✅  
-**Next Phase**: Phase 1 - Ingestion & Schema Handling  
-**Estimated Duration**: 5-7 days
+**Current Status**: Phase 1 Complete
+**Next Phase**: Phase 2 - Deterministic Analytics Layer
+**Previous**: See `PHASE_1_COMPLETE.md` for what was built
 
 ---
 
-## Quick Start for Phase 1
+## Where We Left Off
+
+Phase 1 is complete. The data ingestion layer is fully functional:
+- CSV/Excel upload endpoints working
+- Schema detection identifies column types (date, currency, email, etc.)
+- Validation engine provides helpful error messages
+- All uploads stored in PostgreSQL
+- 39 tests passing, 88% coverage
+
+You can now upload data files and get back structured schema information with validation feedback.
+
+---
+
+## What We Need to Do: Phase 2
+
+Phase 2 builds the analytics engine - the deterministic calculations that form the foundation of Echo's value. No LLM involvement here. Just accurate, testable math.
+
+### Core Principle
+
+```
+Raw Data -> Deterministic Metrics -> (Later: LLM Narrative)
+             ^^^^^^^^^^^^^^^^^
+             Phase 2 builds this
+```
+
+### Deliverables
+
+1. **Metrics Engine Architecture**
+   - Base metric class with standard interface
+   - Metric result model (value, unit, period, metadata)
+   - Metric registry for discovery
+
+2. **Revenue Metrics**
+   - Total Revenue
+   - MRR (Monthly Recurring Revenue)
+   - ARR (Annual Recurring Revenue)
+   - Revenue Growth Rate (MoM, YoY)
+
+3. **Financial Metrics**
+   - CAC (Customer Acquisition Cost)
+   - LTV (Lifetime Value)
+   - LTV:CAC Ratio
+   - Burn Rate
+
+4. **Marketing Metrics**
+   - Conversion Rate
+   - Funnel Analysis (leads -> customers)
+   - Channel Performance
+
+5. **Time-Series Utilities**
+   - Period aggregation (daily, weekly, monthly)
+   - Period-over-period comparisons
+
+---
+
+## Quick Start for Phase 2
 
 ### Step 1: Read the Plan
-📖 Open: `/workspaces/AstroGuard/planning/02_PHASE_1_INGESTION_AND_SCHEMA.md`
+Open: `/planning/03_PHASE_2_ANALYTICS_LAYER.md`
 
-This document contains:
-- Detailed task breakdown
-- Complete code examples
-- Database models
-- API endpoints
-- Test strategies
+### Step 2: First Task - Base Metric Class
 
-### Step 2: First Task - Database Models
-
-Create the `DataSource` model to track uploaded files:
-
-**File**: `app/models/data_source.py`
+Create `app/services/metrics/base.py`:
 
 ```python
-from sqlalchemy import Column, String, DateTime, JSON, Integer, Enum
-from sqlalchemy.sql import func
-from app.core.database import Base
-import enum
+from abc import ABC, abstractmethod
+from typing import Dict, Any, List
+import pandas as pd
+from pydantic import BaseModel
+from datetime import datetime
 
-class SourceType(str, enum.Enum):
-    CSV = "csv"
-    EXCEL = "excel"
-    STRIPE = "stripe"
-    HUBSPOT = "hubspot"
 
-class DataSource(Base):
-    __tablename__ = "data_sources"
-    
-    id = Column(String, primary_key=True)
-    user_id = Column(String, nullable=False)
-    source_type = Column(Enum(SourceType), nullable=False)
-    file_name = Column(String)
-    upload_timestamp = Column(DateTime(timezone=True), server_default=func.now())
-    schema_info = Column(JSON)
-    validation_status = Column(String)
-    validation_errors = Column(JSON)
-    row_count = Column(Integer)
+class MetricResult(BaseModel):
+    metric_name: str
+    value: float
+    unit: str  # "$", "%", "count"
+    period: str  # "2024-01", "Q1 2024"
+    metadata: Dict[str, Any] = {}
+    calculated_at: datetime = datetime.now()
+
+
+class MetricDefinition(BaseModel):
+    name: str
+    display_name: str
+    description: str
+    category: str  # "revenue", "financial", "marketing"
+    unit: str
+    formula: str
+    required_columns: List[str]
+
+
+class BaseMetric(ABC):
+
+    def __init__(self, df: pd.DataFrame):
+        self.df = df
+        self.validate_data()
+
+    @abstractmethod
+    def calculate(self) -> MetricResult:
+        pass
+
+    @abstractmethod
+    def get_definition(self) -> MetricDefinition:
+        pass
+
+    def validate_data(self):
+        definition = self.get_definition()
+        missing = [col for col in definition.required_columns if col not in self.df.columns]
+        if missing:
+            raise ValueError(f"Missing columns for {definition.name}: {missing}")
 ```
 
-### Step 3: Create First Endpoint
+### Step 3: First Metric - Total Revenue
 
-**File**: `app/api/v1/ingestion.py`
-
-Start with a simple CSV upload endpoint:
+Create `app/services/metrics/revenue.py`:
 
 ```python
-from fastapi import APIRouter, UploadFile, File
+import pandas as pd
+from app.services.metrics.base import BaseMetric, MetricResult, MetricDefinition
 
-router = APIRouter()
 
-@router.post("/upload/csv")
-async def upload_csv(file: UploadFile = File(...)):
-    """Upload and validate CSV file"""
-    content = await file.read()
-    # Process CSV...
-    return {"message": "File uploaded", "filename": file.filename}
+class TotalRevenue(BaseMetric):
+
+    def get_definition(self) -> MetricDefinition:
+        return MetricDefinition(
+            name="total_revenue",
+            display_name="Total Revenue",
+            description="Sum of all revenue in the period",
+            category="revenue",
+            unit="$",
+            formula="SUM(amount)",
+            required_columns=["amount"]
+        )
+
+    def calculate(self, period: str = None) -> MetricResult:
+        total = self.df["amount"].sum()
+        return MetricResult(
+            metric_name="total_revenue",
+            value=round(total, 2),
+            unit="$",
+            period=period or "all"
+        )
 ```
 
-### Step 4: Test It!
+### Step 4: Test It
 
 ```bash
-# Create a test CSV
-echo "date,amount,customer_id
-2024-01-01,100,CUST001
-2024-01-02,200,CUST002" > test.csv
-
-# Upload it
-curl -X POST "http://localhost:8000/api/v1/ingestion/upload/csv" \
-  -F "file=@test.csv"
-```
-
----
-
-## Phase 1 Task Checklist
-
-Use this as your todo list:
-
-### Task 1: File Upload Endpoints (Day 1)
-- [ ] Create `app/models/data_source.py`
-- [ ] Create `app/models/schemas.py` (Pydantic models)
-- [ ] Create `app/api/v1/ingestion.py`
-- [ ] Add ingestion router to main app
-- [ ] Test CSV upload endpoint
-- [ ] Test Excel upload endpoint
-
-### Task 2: Schema Detection (Day 1-2)
-- [ ] Create `app/services/schema_detector.py`
-- [ ] Implement `detect_schema()` method
-- [ ] Implement column type detection
-- [ ] Add semantic type detection (currency, email, URL, etc.)
-- [ ] Test with various CSV files
-
-### Task 3: Data Validation (Day 2-3)
-- [ ] Create `app/services/data_validator.py`
-- [ ] Implement basic validation rules
-- [ ] Add use-case specific validation
-- [ ] Design helpful error messages
-- [ ] Test with messy data
-
-### Task 4: Ingestion Service (Day 3-4)
-- [ ] Create `app/services/ingestion.py`
-- [ ] Integrate schema detection
-- [ ] Integrate validation
-- [ ] Save to database
-- [ ] Return structured response
-
-### Task 5: Stripe Connector (Day 4-5)
-- [ ] Create `app/services/connectors/stripe_connector.py`
-- [ ] Implement charge fetching
-- [ ] Implement invoice fetching
-- [ ] Create connector endpoint
-- [ ] Test with Stripe test API key
-
-### Task 6: Sample Data & Testing (Day 5-7)
-- [ ] Create sample revenue CSV (100+ rows)
-- [ ] Create sample marketing CSV (100+ rows)
-- [ ] Create sample with errors
-- [ ] Write unit tests for schema detection
-- [ ] Write unit tests for validation
-- [ ] Write integration test for upload flow
-
----
-
-## Development Workflow
-
-### Daily Routine
-
-1. **Morning**: Pick 1-2 tasks from checklist
-2. **Code**: Implement features
-3. **Test**: Write and run tests
-4. **Commit**: Git commit with clear message
-5. **Document**: Update progress
-
-### Testing as You Go
-
-```bash
-# Run specific test file
-docker-compose exec app pytest tests/unit/test_schema_detector.py -v
-
-# Run all tests
-docker-compose exec app pytest
-
-# Run with coverage
-docker-compose exec app pytest --cov=app --cov-report=html
-
-# View coverage report
-open htmlcov/index.html
-```
-
-### Useful Commands
-
-```bash
-# View API docs (always up-to-date)
-open http://localhost:8000/api/v1/docs
-
-# Check logs
-docker-compose logs app -f
-
-# Restart after changes
-docker-compose restart app
-
-# Access Python shell to test code
 docker-compose exec app python
->>> from app.services.schema_detector import SchemaDetector
 >>> import pandas as pd
->>> df = pd.read_csv('test.csv')
->>> detector = SchemaDetector(df)
->>> detector.detect_schema()
+>>> from app.services.metrics.revenue import TotalRevenue
+>>> df = pd.read_csv('data/samples/revenue_sample.csv')
+>>> metric = TotalRevenue(df)
+>>> result = metric.calculate()
+>>> print(f"Total Revenue: ${result.value:,.2f}")
 ```
 
 ---
 
-## MVP Approach (Faster Path)
+## Phase 2 Task Checklist
 
-If you want to move faster, focus on the essential features first:
+### Task 1: Metrics Architecture (Day 1)
+- [ ] Create `app/services/metrics/` directory
+- [ ] Create `base.py` with BaseMetric, MetricResult, MetricDefinition
+- [ ] Create `registry.py` for metric discovery
+- [ ] Write tests for base classes
 
-### Week 1 MVP:
-1. ✅ CSV upload endpoint (basic)
-2. ✅ Simple schema detection (just column types)
-3. ✅ Basic validation (empty file, missing columns)
-4. ✅ Save to database
-5. ✅ Return results
+### Task 2: Revenue Metrics (Day 1-2)
+- [ ] TotalRevenue
+- [ ] MRR (Monthly Recurring Revenue)
+- [ ] ARR (Annual Recurring Revenue)
+- [ ] RevenueGrowthRate
+- [ ] Tests for each metric
 
-**Skip for MVP**:
-- Excel support (add later)
-- Stripe connector (add later)
-- Advanced validation (add later)
+### Task 3: Financial Metrics (Day 2-3)
+- [ ] CAC (Customer Acquisition Cost)
+- [ ] LTV (Lifetime Value)
+- [ ] LTVCACRatio
+- [ ] Tests for each metric
 
-### Then Iterate:
-Once MVP works end-to-end, add:
-- Better error messages
-- Excel support
-- More validation rules
-- Stripe connector
+### Task 4: Marketing Metrics (Day 3-4)
+- [ ] ConversionRate
+- [ ] FunnelAnalysis
+- [ ] ChannelPerformance
+- [ ] Tests for each metric
 
----
+### Task 5: Time-Series Utilities (Day 4-5)
+- [ ] Create `app/services/metrics/timeseries.py`
+- [ ] Period aggregation (daily, weekly, monthly)
+- [ ] Period-over-period comparison
+- [ ] Tests for time-series functions
 
-## Key Principles for Phase 1
-
-1. **Start Simple**: Get CSV upload working first, then enhance
-2. **Test Early**: Write tests as you build features
-3. **User-Friendly Errors**: Focus on helpful validation messages
-4. **Real Data**: Use realistic sample datasets for testing
-5. **Commit Often**: Small, focused commits
-
----
-
-## Expected Timeline
-
-### Week 1 (Phase 1)
-- **Mon-Tue**: File upload + schema detection
-- **Wed-Thu**: Validation engine + ingestion service
-- **Fri**: Stripe connector (optional)
-
-### Weekend
-- Polish, test, document
-- Create sample datasets
-- Write comprehensive tests
-
-### Week 2 Start
-- Begin Phase 2: Deterministic Analytics Layer
+### Task 6: API Endpoints (Day 5)
+- [ ] Create `app/api/v1/metrics.py`
+- [ ] GET /metrics - List available metrics
+- [ ] POST /metrics/calculate - Calculate metrics for a data source
+- [ ] Tests for API endpoints
 
 ---
 
 ## Success Criteria
 
-Phase 1 is done when you can:
+Phase 2 is complete when:
 
-1. Upload a CSV file via API
-2. Get automatic schema detection back
-3. See helpful validation messages for bad data
-4. Query the database to see stored metadata
-5. (Optional) Connect to Stripe and ingest data
+1. All metrics pass unit tests with known datasets
+2. Metrics match manual calculations (verified with sample data)
+3. Metrics API endpoints return correct results
+4. Code coverage remains >80%
+
+---
+
+## Key Files to Create
+
+```
+app/services/metrics/
+├── __init__.py
+├── base.py          # BaseMetric, MetricResult, MetricDefinition
+├── registry.py      # Metric registry for discovery
+├── revenue.py       # TotalRevenue, MRR, ARR, GrowthRate
+├── financial.py     # CAC, LTV, LTVCACRatio
+├── marketing.py     # ConversionRate, FunnelAnalysis
+└── timeseries.py    # Period aggregation, comparisons
+
+app/api/v1/metrics.py  # Metrics API endpoints
+
+tests/services/metrics/
+├── __init__.py
+├── test_revenue.py
+├── test_financial.py
+├── test_marketing.py
+└── test_timeseries.py
+```
+
+---
+
+## Testing Approach
+
+For each metric:
+1. Create a known dataset with expected results
+2. Calculate metric
+3. Assert result matches expected value exactly
+
+Example:
+```python
+def test_total_revenue():
+    df = pd.DataFrame({
+        'amount': [100, 200, 300]
+    })
+    metric = TotalRevenue(df)
+    result = metric.calculate()
+    assert result.value == 600.0
+    assert result.unit == "$"
+```
+
+---
+
+## Architecture Notes
+
+**Single Agent Decision**: We decided against multi-agent architecture. Phase 3 will use a single LLM call to generate narratives from the calculated metrics. This keeps costs low and latency fast.
+
+**Metrics Flow**:
+```
+Data Source (from Phase 1)
+    |
+    v
+Load DataFrame
+    |
+    v
+Calculate Metrics (Phase 2)
+    |
+    v
+Return MetricResult objects
+    |
+    v
+(Phase 3: Pass to LLM for narrative)
+```
+
+---
+
+## Development Commands
+
+```bash
+# Run tests
+docker-compose exec app pytest tests/services/metrics/ -v
+
+# Run with coverage
+docker-compose exec app pytest --cov=app/services/metrics
+
+# Test a metric interactively
+docker-compose exec app python
+>>> from app.services.metrics.revenue import MRR
+>>> import pandas as pd
+>>> df = pd.read_csv('data/samples/revenue_sample.csv')
+>>> mrr = MRR(df)
+>>> result = mrr.calculate(period='2024-01')
+>>> print(result)
+```
 
 ---
 
 ## Resources
 
-### Phase 1 Documentation
-- Full plan: `/workspaces/AstroGuard/planning/02_PHASE_1_INGESTION_AND_SCHEMA.md`
-- Code examples included in plan
-- Acceptance criteria at end of document
-
-### Helpful Links
-- FastAPI File Uploads: https://fastapi.tiangolo.com/tutorial/request-files/
-- Pandas Type Detection: https://pandas.pydata.org/docs/reference/api/pandas.api.types.html
-- SQLAlchemy Models: https://docs.sqlalchemy.org/en/20/orm/declarative_tables.html
-- Stripe Python: https://stripe.com/docs/api/python
+- Phase 2 detailed plan: `/planning/03_PHASE_2_ANALYTICS_LAYER.md`
+- Sample revenue data: `data/samples/revenue_sample.csv`
+- Sample marketing data: `data/samples/marketing_sample.csv`
 
 ---
 
-## Get Started Now!
+## After Phase 2
 
-```bash
-# 1. Make sure everything is running
-docker-compose ps
+Phase 3: LLM-Powered Insights
+- Report templates
+- DeepSeek narrative generation (single call, not multi-agent)
+- Natural language Q&A
 
-# 2. Open the Phase 1 plan
-code /workspaces/AstroGuard/planning/02_PHASE_1_INGESTION_AND_SCHEMA.md
-
-# 3. Create first file
-mkdir -p app/models
-touch app/models/data_source.py
-
-# 4. Start coding!
-```
+The metrics from Phase 2 feed directly into Phase 3's narrative generation.
 
 ---
 
-**Ready?** Let's build the data ingestion layer! 🚀
-
-Remember: **Progress over perfection**. Get something working, then make it better.
-
-Good luck! You've got this! 💪
+*Last updated: 2025-11-22*

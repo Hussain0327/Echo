@@ -6,6 +6,7 @@ from app.config import get_settings
 from app.api.v1.router import api_router
 from app.core.database import init_db, close_db
 from app.core.cache import close_redis
+from app.models.data_source import DataSource  # noqa: F401
 
 settings = get_settings()
 

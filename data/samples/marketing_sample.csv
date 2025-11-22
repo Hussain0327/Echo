@@ -1,0 +1,94 @@
+date,source,campaign,leads,conversions,spend,status
+2024-01-01,Google Ads,Winter Sale,150,12,500.00,active
+2024-01-01,Facebook,Winter Sale,200,18,450.00,active
+2024-01-01,LinkedIn,B2B Outreach,45,8,300.00,active
+2024-01-02,Google Ads,Winter Sale,165,15,520.00,active
+2024-01-02,Facebook,Winter Sale,180,14,430.00,active
+2024-01-02,LinkedIn,B2B Outreach,52,9,310.00,active
+2024-01-03,Google Ads,Winter Sale,142,11,480.00,active
+2024-01-03,Facebook,Winter Sale,195,16,460.00,active
+2024-01-03,Email,Newsletter,320,28,50.00,active
+2024-01-04,Google Ads,Winter Sale,178,17,550.00,active
+2024-01-04,Facebook,Winter Sale,210,19,470.00,active
+2024-01-04,LinkedIn,B2B Outreach,48,7,290.00,active
+2024-01-05,Google Ads,Winter Sale,155,13,510.00,active
+2024-01-05,Facebook,Winter Sale,188,15,440.00,active
+2024-01-05,Email,Newsletter,295,25,50.00,active
+2024-01-06,Google Ads,Product Launch,220,22,680.00,active
+2024-01-06,Facebook,Product Launch,245,20,620.00,active
+2024-01-06,LinkedIn,B2B Outreach,58,10,340.00,active
+2024-01-07,Google Ads,Product Launch,235,24,710.00,active
+2024-01-07,Facebook,Product Launch,260,21,650.00,active
+2024-01-07,Twitter,Product Launch,95,6,200.00,active
+2024-01-08,Google Ads,Product Launch,198,18,640.00,active
+2024-01-08,Facebook,Product Launch,225,17,590.00,active
+2024-01-08,LinkedIn,B2B Outreach,62,11,360.00,active
+2024-01-09,Google Ads,Product Launch,245,25,730.00,active
+2024-01-09,Facebook,Product Launch,270,22,670.00,active
+2024-01-09,Email,Newsletter,340,32,50.00,active
+2024-01-10,Google Ads,Product Launch,212,20,660.00,active
+2024-01-10,Facebook,Product Launch,238,18,610.00,active
+2024-01-10,Twitter,Product Launch,88,5,180.00,active
+2024-01-11,Google Ads,Retargeting,180,28,420.00,active
+2024-01-11,Facebook,Retargeting,165,25,380.00,active
+2024-01-11,LinkedIn,B2B Outreach,55,9,320.00,active
+2024-01-12,Google Ads,Retargeting,195,31,450.00,active
+2024-01-12,Facebook,Retargeting,178,27,400.00,active
+2024-01-12,Email,Newsletter,310,29,50.00,active
+2024-01-13,Google Ads,Retargeting,168,26,400.00,active
+2024-01-13,Facebook,Retargeting,155,23,360.00,active
+2024-01-13,Twitter,Brand Awareness,120,4,250.00,active
+2024-01-14,Google Ads,Retargeting,202,33,470.00,active
+2024-01-14,Facebook,Retargeting,188,29,420.00,active
+2024-01-14,LinkedIn,B2B Outreach,68,12,380.00,active
+2024-01-15,Google Ads,Spring Promo,175,16,530.00,active
+2024-01-15,Facebook,Spring Promo,192,17,490.00,active
+2024-01-15,Email,Newsletter,285,24,50.00,active
+2024-01-16,Google Ads,Spring Promo,188,18,560.00,active
+2024-01-16,Facebook,Spring Promo,205,19,510.00,active
+2024-01-16,Twitter,Brand Awareness,105,3,220.00,paused
+2024-01-17,Google Ads,Spring Promo,162,14,500.00,active
+2024-01-17,Facebook,Spring Promo,178,15,470.00,active
+2024-01-17,LinkedIn,B2B Outreach,72,13,400.00,active
+2024-01-18,Google Ads,Spring Promo,195,19,580.00,active
+2024-01-18,Facebook,Spring Promo,218,20,540.00,active
+2024-01-18,Email,Newsletter,325,30,50.00,active
+2024-01-19,Google Ads,Spring Promo,172,15,520.00,active
+2024-01-19,Facebook,Spring Promo,185,16,480.00,active
+2024-01-19,Twitter,Brand Awareness,92,2,190.00,paused
+2024-01-20,Google Ads,Spring Promo,208,21,600.00,active
+2024-01-20,Facebook,Spring Promo,230,22,560.00,active
+2024-01-20,LinkedIn,B2B Outreach,65,11,370.00,active
+2024-01-21,Google Ads,Competitor,145,18,380.00,active
+2024-01-21,Facebook,Competitor,158,19,350.00,active
+2024-01-21,Email,Newsletter,298,26,50.00,active
+2024-01-22,Google Ads,Competitor,162,21,410.00,active
+2024-01-22,Facebook,Competitor,175,22,380.00,active
+2024-01-22,LinkedIn,B2B Outreach,78,14,420.00,active
+2024-01-23,Google Ads,Competitor,138,16,360.00,active
+2024-01-23,Facebook,Competitor,150,17,330.00,active
+2024-01-23,Twitter,Brand Awareness,110,5,230.00,active
+2024-01-24,Google Ads,Competitor,155,19,390.00,active
+2024-01-24,Facebook,Competitor,168,20,360.00,active
+2024-01-24,Email,Newsletter,315,28,50.00,active
+2024-01-25,Google Ads,Competitor,148,17,370.00,active
+2024-01-25,Facebook,Competitor,160,18,340.00,active
+2024-01-25,LinkedIn,B2B Outreach,82,15,440.00,active
+2024-01-26,Google Ads,Q1 Push,225,23,700.00,active
+2024-01-26,Facebook,Q1 Push,248,25,660.00,active
+2024-01-26,Twitter,Brand Awareness,98,4,210.00,active
+2024-01-27,Google Ads,Q1 Push,242,26,740.00,active
+2024-01-27,Facebook,Q1 Push,265,27,690.00,active
+2024-01-27,Email,Newsletter,350,35,50.00,active
+2024-01-28,Google Ads,Q1 Push,218,22,680.00,active
+2024-01-28,Facebook,Q1 Push,235,23,640.00,active
+2024-01-28,LinkedIn,B2B Outreach,75,13,410.00,active
+2024-01-29,Google Ads,Q1 Push,255,28,760.00,active
+2024-01-29,Facebook,Q1 Push,278,29,720.00,active
+2024-01-29,Twitter,Brand Awareness,115,6,240.00,active
+2024-01-30,Google Ads,Q1 Push,232,24,710.00,active
+2024-01-30,Facebook,Q1 Push,250,25,670.00,active
+2024-01-30,Email,Newsletter,330,31,50.00,active
+2024-01-31,Google Ads,Q1 Push,268,30,780.00,active
+2024-01-31,Facebook,Q1 Push,290,31,740.00,active
+2024-01-31,LinkedIn,B2B Outreach,88,16,460.00,active

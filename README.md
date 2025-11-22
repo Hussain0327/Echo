@@ -2,7 +2,7 @@
 
 > Building an AI-powered analytics tool that turns messy business data into clear insights. Because small businesses deserve good data tools too.
 
-**Status**: 🚧 In Development - Phase 0 Complete ✅
+**Status**: In Development - Phase 1 Complete
 **Powered by**: DeepSeek 3.2, FastAPI, PostgreSQL, Redis
 **Goal**: Transform 2-hour manual reports into 15-minute automated insights
 
@@ -28,29 +28,73 @@ I don't trust LLMs to do calculations. They're great at explaining things, terri
 
 ## Current Status
 
-### ✅ Phase 0 Complete (Foundation)
+### Phase 1 Complete (Data Ingestion)
 What's working right now:
-- FastAPI backend running in Docker
-- PostgreSQL database connected
-- Redis cache working
-- Health check endpoints live
-- DeepSeek API configured and ready
-- Testing framework set up
+- CSV and Excel file upload via API
+- Automatic schema detection (date, currency, email, URL, boolean, etc.)
+- Data validation with helpful error messages
+- All uploads stored in PostgreSQL with metadata
+- 39 tests passing, 88% code coverage
 
 Try it:
 ```bash
+# Start the services
 docker-compose up -d
-curl http://localhost:8000/api/v1/health
-# → {"status":"healthy","service":"echo-api"}
+
+# Upload a CSV file
+curl -X POST "http://localhost:8000/api/v1/ingestion/upload/csv" \
+  -F "file=@data/samples/revenue_sample.csv"
+
+# Response includes detected schema and validation results
 ```
 
-### 🎯 Next Up: Phase 1 (Data Ingestion)
-What I'm building next (this week):
-- CSV/Excel upload endpoints
-- Automatic schema detection ("Oh, this column looks like currency")
-- Smart data validation with helpful error messages
-- Stripe API connector to pull transaction data
-- Store everything in PostgreSQL for later analysis
+Example response:
+```json
+{
+  "status": "valid",
+  "schema_info": {
+    "columns": {
+      "date": {"data_type": "date"},
+      "amount": {"data_type": "currency"},
+      "customer_id": {"data_type": "string"}
+    },
+    "total_rows": 101
+  }
+}
+```
+
+### Next Up: Phase 2 (Analytics Engine)
+What I'm building next:
+- Revenue metrics (MRR, ARR, growth rate)
+- Financial metrics (CAC, LTV, burn rate)
+- Marketing metrics (conversion rates, funnel analysis)
+- Metrics registry with testable calculations
+
+---
+
+## API Endpoints
+
+### Health
+```
+GET  /                        Service info
+GET  /api/v1/health           Basic health check
+GET  /api/v1/health/db        Database health
+GET  /api/v1/health/redis     Redis health
+```
+
+### Ingestion (Phase 1)
+```
+POST /api/v1/ingestion/upload/csv     Upload CSV file
+POST /api/v1/ingestion/upload/excel   Upload Excel file
+GET  /api/v1/ingestion/sources        List all uploaded sources
+GET  /api/v1/ingestion/sources/{id}   Get source by ID
+```
+
+### API Documentation
+```
+GET  /api/v1/docs             Swagger UI
+GET  /api/v1/redoc            ReDoc
+```
 
 ---
 
@@ -58,20 +102,26 @@ What I'm building next (this week):
 
 I'm building this in 6 phases:
 
-**Week 1** - Get data in
-Upload files, detect schemas, validate quality
+**Phase 0** - Foundation (Complete)
+Docker environment, FastAPI + PostgreSQL + Redis, health checks
 
-**Week 2** - Calculate metrics
-MRR, CAC, LTV, conversion rates (the real numbers SMBs care about)
+**Phase 1** - Data Ingestion (Complete)
+File upload, schema detection, data validation, storage
 
-**Week 3-4** - Make it smart
-Multi-agent system, LLM-powered insights, natural language Q&A
+**Phase 2** - Analytics Engine (Next)
+MRR, CAC, LTV, conversion rates - the real numbers SMBs care about
 
-**Week 5** - Make it production-ready
+**Phase 3** - Intelligence
+LLM-powered insights, natural language Q&A
+
+**Phase 4** - Evaluation
+Time tracking, accuracy metrics, user feedback
+
+**Phase 5** - Production Ready
 Tests, CI/CD, monitoring, error handling
 
-**Week 6** - Polish and document
-README, architecture diagrams, demo video
+**Phase 6** - Polish
+Documentation, demos, portfolio presentation
 
 Full roadmap: See `/planning/` folder
 
@@ -93,8 +143,8 @@ Full roadmap: See `/planning/` folder
 Backend:     FastAPI, Python 3.11
 Database:    PostgreSQL 15 (async)
 Cache:       Redis 7
-AI/LLM:      DeepSeek 3.2 Exp
-Testing:     pytest, pytest-cov
+AI/LLM:      DeepSeek 3.2
+Testing:     pytest, pytest-cov (88% coverage)
 Monitoring:  structlog, Prometheus
 DevOps:      Docker, GitHub Actions
 ```
@@ -117,8 +167,8 @@ docker-compose logs app -f
 # Run tests
 docker-compose exec app pytest
 
-# Access Python shell
-docker-compose exec app python
+# Run tests with coverage
+docker-compose exec app pytest --cov=app
 
 # Restart after code changes
 docker-compose restart app
@@ -135,15 +185,25 @@ docker-compose down
 Echo/
 ├── app/                    # Main application
 │   ├── api/v1/            # API endpoints
+│   │   ├── health.py      # Health checks
+│   │   └── ingestion.py   # File upload endpoints
 │   ├── core/              # Database, cache, config
 │   ├── models/            # SQLAlchemy & Pydantic models
+│   │   ├── data_source.py # Upload tracking model
+│   │   └── schemas.py     # API schemas
 │   └── services/          # Business logic
-│       ├── llm/           # DeepSeek integration (Phase 3)
-│       ├── agents/        # Multi-agent system (Phase 3)
-│       └── metrics/       # Analytics engine (Phase 2)
-├── tests/                 # Test suite
+│       ├── schema_detector.py   # Auto-detect column types
+│       ├── data_validator.py    # Validation engine
+│       ├── ingestion.py         # Upload orchestration
+│       └── llm/                 # DeepSeek integration (Phase 3)
+├── tests/                 # Test suite (39 tests)
+│   ├── api/              # API tests
+│   └── services/         # Service tests
 ├── planning/              # Detailed phase docs
 ├── data/samples/          # Sample datasets
+│   ├── revenue_sample.csv
+│   ├── marketing_sample.csv
+│   └── bad_data_sample.csv
 ├── docker-compose.yml     # Services orchestration
 └── requirements.txt       # Python dependencies
 ```
@@ -177,7 +237,7 @@ Every feature is designed around actual SMB needs:
 To prove this actually works, I'm measuring:
 
 **Time saved**
-Target: 2 hours manual → 15 minutes automated (8x faster)
+Target: 2 hours manual -> 15 minutes automated (8x faster)
 
 **User satisfaction**
 Target: >4.0/5 rating on generated insights
@@ -185,33 +245,34 @@ Target: >4.0/5 rating on generated insights
 **Accuracy**
 Target: >90% match with expert analysis (using golden datasets)
 
-**Adoption**
-Target: Actually usable by non-technical business owners
+**Code Quality**
+Current: 88% test coverage, 39 passing tests
 
 ---
 
 ## Current Roadmap
 
-### ✅ Phase 0: Foundation (Complete)
+### Phase 0: Foundation (Complete)
 - [x] Docker environment
 - [x] FastAPI + PostgreSQL + Redis
 - [x] Health checks working
 - [x] DeepSeek configured
 
-### 🏗️ Phase 1: Ingestion (In Progress)
-- [ ] CSV/Excel upload
-- [ ] Schema detection
-- [ ] Data validation
-- [ ] Stripe connector
+### Phase 1: Ingestion (Complete)
+- [x] CSV/Excel upload
+- [x] Schema detection (date, currency, email, URL, boolean)
+- [x] Data validation with helpful messages
+- [x] Store uploads in PostgreSQL
+- [x] 39 tests, 88% coverage
 
-### 📋 Phase 2: Analytics (Next)
+### Phase 2: Analytics (Next)
 - [ ] Revenue metrics (MRR, ARR)
 - [ ] Financial metrics (CAC, LTV)
 - [ ] Marketing metrics (conversion rates)
+- [ ] Metrics registry
 
-### 🤖 Phase 3: Intelligence (Upcoming)
+### Phase 3: Intelligence (Upcoming)
 - [ ] Report templates
-- [ ] Multi-agent orchestration
 - [ ] DeepSeek narrative generation
 - [ ] Natural language Q&A
 
@@ -221,10 +282,19 @@ See `/planning/` for detailed plans.
 
 ## Development Log
 
-**2025-11-19** - Phase 0 Complete
-Got the entire foundation working. FastAPI running, Docker containers healthy, all health checks passing. DeepSeek API key configured. Ready to build actual features.
+**2025-11-22** - Phase 1 Complete
+Built the entire data ingestion layer:
+- Schema detector that auto-identifies column types (date, currency, email, URL, boolean)
+- Validation engine with helpful error messages
+- CSV and Excel upload endpoints
+- All metadata stored in PostgreSQL
+- 39 tests passing with 88% coverage
 
-Next up: File upload endpoints and schema detection.
+Files created: 12 new files, 7 modified
+Ready for Phase 2: Analytics Engine
+
+**2025-11-19** - Phase 0 Complete
+Got the entire foundation working. FastAPI running, Docker containers healthy, all health checks passing. DeepSeek API key configured.
 
 ---
 
@@ -247,7 +317,7 @@ Plus, this is a great way to showcase:
 ## Want to Follow Along?
 
 - Check `/planning/` for detailed phase documentation
-- See `PHASE_0_COMPLETE.md` for what's done
+- See `PHASE_1_COMPLETE.md` for what's done
 - Read `WHATS_NEXT.md` for immediate next steps
 
 ---
@@ -264,6 +334,6 @@ Building in public. Questions? Feedback? Open an issue.
 
 ---
 
-*Last updated: 2025-11-19*
-*Current phase: Ingestion & Schema Handling*
-*LLM: DeepSeek 3.2 Exp*
+*Last updated: 2025-11-22*
+*Current phase: Phase 2 - Analytics Engine*
+*LLM: DeepSeek 3.2*

@@ -1,0 +1,11 @@
+date,amount,customer_id,status
+invalid-date,100.00,CUST001,paid
+2024-01-02,,CUST002,paid
+2024-01-03,not-a-number,CUST003,paid
+,250.00,CUST004,
+2024/13/45,300.00,CUST005,paid
+2024-01-06,150.00,,paid
+,,CUST007,
+2024-01-08,abc,CUST008,paid
+tomorrow,200.00,CUST009,paid
+2024-01-10,175.00,CUST010,paid
