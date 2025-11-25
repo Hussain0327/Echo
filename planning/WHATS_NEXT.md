@@ -1,199 +1,212 @@
 # What's Next
 
-**Current Status**: Phase 3 In Progress
-**Last Updated**: 2025-11-24
-**Previous**: See `PHASE_3_PROGRESS.md` for what was just built
+**Current Status**: Phase 4 Complete
+**Last Updated**: 2025-11-25
+**Previous**: See `PHASE_4_COMPLETE.md` for what was just built
 
 ---
 
 ## Where We Left Off
 
-The conversational AI layer is working. Echo can chat with users, understand their data, and explain metrics in plain English.
+The evaluation system is done. I can now track real impact metrics and prove Echo delivers value.
 
-**What's done:**
-- Chat endpoints (send messages, load data, manage sessions)
-- Echo persona (McKinsey-style consultant)
-- Data context injection (auto-calculates metrics when you upload)
-- Session management (maintains conversation history)
-- 31 tests, 99% coverage on conversation service
+**What's working:**
+- Session tracking (automatically records how long tasks take)
+- Time savings calculation (compares actual vs baseline)
+- Feedback collection (ratings, accuracy validation, text feedback)
+- Analytics aggregation (time, satisfaction, accuracy, usage stats)
+- Portfolio stats endpoint (showcase-ready metrics)
+- Telemetry middleware (logs every request with timing)
+- 190 tests passing, 82% coverage
 
-You can now have a natural conversation about your business data.
+The core product is functionally complete. Chat works, reports work, metrics work, and I can measure impact.
 
 ---
 
-## What We Need to Do Next
+## What We Need to Do Next: Phase 5
 
-The conversation works, but we're still missing structured reports. Right now Echo gives ad-hoc answers. We need it to also generate proper reports.
+Phase 5 is about making Echo production-ready. The features are done, now it's about reliability, security, and deployment.
 
-### Task 1: Report Templates
+### Task 1: CI/CD Pipeline
 
-Create predefined report formats that combine multiple metrics into a cohesive story.
+Set up GitHub Actions to automate testing and deployment.
 
-**Templates to build:**
-1. **Weekly Revenue Health**
-   - Total revenue, growth rate, MRR, ARR
-   - Revenue by product breakdown
-   - Key trends and concerns
-
-2. **Marketing Funnel Performance**
-   - Conversion rate, funnel analysis
-   - Channel performance comparison
-   - Optimization opportunities
-
-3. **Financial Overview**
-   - CAC, LTV, LTV:CAC ratio
-   - Burn rate, runway
-   - Unit economics assessment
-
-Each template should define:
-- Required metrics
-- Required data columns
-- Narrative sections (executive summary, findings, recommendations)
-
-**Files to create:**
-```
-app/services/reports/
-├── __init__.py
-├── templates.py      # Template definitions
-└── generator.py      # Report generation logic
+**What to build:**
+```yaml
+.github/workflows/
+├── test.yml          # Run tests on every PR
+├── lint.yml          # Check code quality
+└── deploy.yml        # Deploy to production on merge
 ```
 
-### Task 2: Report Generation Endpoint
+**Pipeline steps:**
+1. Run all tests with coverage
+2. Lint code (black, isort, flake8)
+3. Type checking (mypy)
+4. Build Docker image
+5. Deploy to Railway/Render
 
-Build the API to generate reports from templates.
+This ensures nothing breaks in production.
 
-```
-POST /api/v1/reports/generate
-  - template_type: "revenue_health" | "marketing_funnel" | "financial_overview"
-  - file: CSV upload
+### Task 2: Better Error Handling
 
-Returns:
-  - report_id
-  - metrics (all calculated values)
-  - narratives (LLM-generated sections)
-```
+Right now errors are basic. Make them production-grade.
 
-This combines:
-1. Calculate all required metrics (deterministic)
-2. Generate narrative sections (LLM)
-3. Format into structured report
+**What to improve:**
+1. Custom exception classes for different error types
+2. Consistent error response format across all endpoints
+3. Better error messages (tell users what went wrong and how to fix it)
+4. Log errors with full context for debugging
+5. Handle edge cases gracefully (missing data, malformed CSV, API timeouts)
 
-### Task 3: Report Storage
-
-Save generated reports to PostgreSQL for history.
-
-**Model:**
+**Example:**
 ```python
-class Report:
-    id: str
-    template_type: str
-    created_at: datetime
-    metrics: JSON       # Calculated metrics
-    narratives: JSON    # Generated text
-    data_source_id: str # Link to uploaded data
+class DataValidationError(Exception):
+    def __init__(self, field, message, suggestion):
+        self.field = field
+        self.message = message
+        self.suggestion = suggestion
 ```
 
-**Endpoints:**
-```
-GET /api/v1/reports              List all reports
-GET /api/v1/reports/{id}         Get specific report
-GET /api/v1/reports/compare      Compare two reports
-```
+### Task 3: Security & Rate Limiting
+
+Add production security features.
+
+**What to add:**
+1. Rate limiting (max requests per user per minute)
+2. CORS configuration (only allow specific origins in production)
+3. Security headers (helmet-style middleware)
+4. API key authentication (optional for now)
+5. Input validation on all endpoints
+6. Sanitize file uploads (check file size, type, content)
+
+**Tools:**
+- `slowapi` for rate limiting
+- FastAPI's CORS middleware (already have it, just need proper config)
+- Security headers middleware
+
+### Task 4: Performance Optimization
+
+Make Echo fast under load.
+
+**What to optimize:**
+1. Cache metric calculations (same file = same metrics)
+2. Database query optimization (add indexes)
+3. Connection pooling (already have it, tune the settings)
+4. Async everything (already mostly async, audit remaining sync code)
+5. Load testing (locust or k6)
+6. Profile slow endpoints and fix bottlenecks
+
+**Cache strategy:**
+- Cache metrics by file hash for 1 hour
+- Cache LLM responses (same context = same response) for 5 minutes
+- Invalidate on new data upload
+
+### Task 5: Monitoring & Alerting
+
+Know when things break.
+
+**What to add:**
+1. Error tracking (Sentry or similar)
+2. Performance monitoring (response times, throughput)
+3. Health check improvements (deep health checks)
+4. Alerts for failures (email or Slack)
+5. Usage dashboards (who's using what)
+
+**Metrics to track:**
+- Request rate, error rate, latency (P50, P95, P99)
+- Database connection pool usage
+- Redis connection health
+- LLM API call success rate and latency
+
+### Task 6: Deployment
+
+Get Echo live on the internet.
+
+**Deployment options:**
+1. **Railway** (easiest) - Auto-deploy from GitHub
+2. **Render** (good free tier) - Similar to Railway
+3. **Fly.io** (more control) - Close to metal
+4. **DigitalOcean App Platform** (familiar) - Traditional VPS-style
+
+**What to deploy:**
+- FastAPI app (containerized)
+- PostgreSQL (managed database)
+- Redis (managed cache)
+
+**Environment setup:**
+- Production .env file with real secrets
+- Backup strategy for PostgreSQL
+- SSL/TLS certificates
+- Custom domain (optional)
 
 ---
 
-## Quick Start
+## Quick Win Order
 
-### If you want to test the current chat:
+If I want to get to production quickly, here's the priority:
 
-```bash
-# Start services
-docker-compose up -d
+1. **Deploy first** (get it live) - 1-2 hours
+2. **Error handling** (fix obvious issues) - 2-3 hours
+3. **Security basics** (rate limiting, CORS) - 1 hour
+4. **CI/CD** (automate deployments) - 2-3 hours
+5. **Monitoring** (know when it breaks) - 1-2 hours
+6. **Performance** (optimize after seeing real usage) - 3-4 hours
 
-# Basic chat
-curl -X POST "http://localhost:8000/api/v1/chat" \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Hi!"}'
-
-# Chat with data
-curl -X POST "http://localhost:8000/api/v1/chat/with-data" \
-  -F "message=How's my revenue?" \
-  -F "file=@data/samples/revenue_sample.csv"
-```
-
-### If you want to run the tests:
-
-```bash
-# Run all service tests (no database needed)
-docker-compose exec app pytest tests/services/ -v
-
-# Run just the LLM tests
-docker-compose exec app pytest tests/services/llm/ -v
-```
-
----
-
-## Architecture Notes
-
-**Current flow:**
-```
-User Message
-    ↓
-Chat Endpoint (chat.py)
-    ↓
-Conversation Service (conversation.py)
-    ↓
-    ├─→ Context Builder (context_builder.py)
-    │       ↓
-    │   Metrics Engine (from Phase 2)
-    │       ↓
-    │   Formatted Context
-    ↓
-System Prompt + Context + History
-    ↓
-DeepSeek API
-    ↓
-Response to User
-```
-
-**For report generation, we'll add:**
-```
-Report Request
-    ↓
-Report Generator (generator.py)
-    ↓
-    ├─→ Template (templates.py)
-    ├─→ Metrics Engine
-    └─→ Narrator (for each section)
-    ↓
-Structured Report
-    ↓
-Save to PostgreSQL
-    ↓
-Return to User
-```
+Total: 10-15 hours to production-ready.
 
 ---
 
 ## Success Criteria
 
-Phase 3 is complete when:
-1. Can generate a structured report from a template
-2. Reports include both metrics and narratives
-3. Reports are stored and retrievable
-4. At least 2 template types working
-5. Tests for report generation
+Phase 5 is complete when:
+1. Deployed to production and accessible via public URL
+2. CI/CD pipeline running (tests + deploy on merge)
+3. Error handling is consistent and helpful
+4. Rate limiting prevents abuse
+5. Monitoring set up (know when things break)
+6. Load tested (handles 100+ concurrent requests)
 
 ---
 
 ## Files to Reference
 
-- Current chat: `app/api/v1/chat.py`
-- Conversation service: `app/services/llm/conversation.py`
-- Context builder: `app/services/llm/context_builder.py`
-- Echo persona: `app/services/llm/prompts/consultant.py`
-- Original Phase 3 plan: `planning/04_PHASE_3_WORKFLOW_AND_USER_FLOW.md`
+Current architecture:
+- Main app: `app/main.py`
+- API router: `app/api/v1/router.py`
+- Config: `app/config.py`
+- Database: `app/core/database.py`
+- Telemetry: `app/middleware/telemetry.py`
+
+Original Phase 5 plan:
+- `planning/06_PHASE_5_ENGINEERING_EXCELLENCE.md`
 
 ---
 
-*Last updated: 2025-11-24*
+## Testing Current System
+
+Before starting Phase 5, verify everything works:
+
+```bash
+# Start services
+docker-compose up -d
+
+# Run all tests
+docker-compose exec app pytest -v --cov=app
+
+# Test Phase 4 features
+./test_phase4.sh
+
+# Generate a report
+curl -X POST "http://localhost:8000/api/v1/reports/generate?template_type=revenue_health" \
+  -F "file=@data/samples/revenue_sample.csv"
+
+# Check portfolio stats
+curl "http://localhost:8000/api/v1/analytics/portfolio" | python3 -m json.tool
+```
+
+Everything should work. Now let's make it production-grade.
+
+---
+
+*Last updated: 2025-11-25*

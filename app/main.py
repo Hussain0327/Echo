@@ -6,8 +6,11 @@ from app.config import get_settings
 from app.api.v1.router import api_router
 from app.core.database import init_db, close_db
 from app.core.cache import close_redis
+from app.middleware import TelemetryMiddleware
 from app.models.data_source import DataSource  # noqa: F401
 from app.models.report import Report  # noqa: F401
+from app.models.usage_metric import UsageMetric  # noqa: F401
+from app.models.feedback import Feedback  # noqa: F401
 
 settings = get_settings()
 
@@ -44,6 +47,8 @@ if settings.CORS_ORIGINS:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+app.add_middleware(TelemetryMiddleware)
 
 # Include routers
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)

@@ -1,0 +1,16 @@
+{
+  "name": "Echo Development",
+  "forwardPorts": [3000, 8000],
+  "portsAttributes": {
+    "3000": {
+      "label": "Frontend",
+      "onAutoForward": "notify",
+      "visibility": "public"
+    },
+    "8000": {
+      "label": "Backend API",
+      "onAutoForward": "notify",
+      "visibility": "public"
+    }
+  }
+}
