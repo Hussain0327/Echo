@@ -105,9 +105,9 @@ export default function Home() {
                   metrics.data_type === 'marketing' ? 'bg-purple-500/20 text-purple-400' :
                   'bg-slate-500/20 text-slate-400'
                 }`}>
-                  {metrics.data_type === 'revenue' ? '💰 Revenue Data' :
-                   metrics.data_type === 'marketing' ? '📊 Marketing Data' :
-                   '📋 General Data'}
+                  {metrics.data_type === 'revenue' ? 'Revenue Data' :
+                   metrics.data_type === 'marketing' ? 'Marketing Data' :
+                   'General Data'}
                 </span>
               )}
             </div>

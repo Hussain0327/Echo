@@ -1,16 +1,3 @@
-"""
-Statistical analysis functions for A/B testing.
-
-Implements:
-- Two-proportion z-test for comparing conversion rates
-- Confidence intervals for the difference in proportions
-- Lift calculations (absolute and relative)
-- Sample size calculations for power analysis
-- Decision logic for experiment outcomes
-
-All calculations are deterministic - no LLM involvement.
-"""
-
 import math
 from typing import Tuple, Optional
 from dataclasses import dataclass
@@ -19,7 +6,6 @@ from scipy import stats as scipy_stats
 
 @dataclass
 class VariantData:
-    """Data for a single variant in an A/B test."""
     name: str
     users: int
     conversions: int
@@ -27,7 +13,6 @@ class VariantData:
 
     @property
     def conversion_rate(self) -> float:
-        """Calculate conversion rate as a proportion (0-1)."""
         if self.users == 0:
             return 0.0
         return self.conversions / self.users
@@ -35,7 +20,6 @@ class VariantData:
 
 @dataclass
 class ExperimentAnalysis:
-    """Complete statistical analysis of an A/B experiment."""
     control_conversion_rate: float
     variant_conversion_rate: float
     absolute_lift: float  # Percentage points
@@ -52,32 +36,12 @@ class ExperimentAnalysis:
 
 
 def calculate_conversion_rate(conversions: int, users: int) -> float:
-    """
-    Calculate conversion rate as a percentage.
-
-    Args:
-        conversions: Number of users who converted
-        users: Total number of users
-
-    Returns:
-        Conversion rate as a percentage (0-100)
-    """
     if users == 0:
         return 0.0
     return (conversions / users) * 100
 
 
 def calculate_lift(control_rate: float, variant_rate: float) -> Tuple[float, float]:
-    """
-    Calculate absolute and relative lift.
-
-    Args:
-        control_rate: Control group conversion rate (0-1 proportion)
-        variant_rate: Variant group conversion rate (0-1 proportion)
-
-    Returns:
-        Tuple of (absolute_lift in percentage points, relative_lift as percentage)
-    """
     # Absolute lift in percentage points
     absolute_lift = (variant_rate - control_rate) * 100
 
@@ -94,16 +58,6 @@ def calculate_pooled_proportion(
     control: VariantData,
     variant: VariantData
 ) -> float:
-    """
-    Calculate pooled proportion for z-test.
-
-    Args:
-        control: Control variant data
-        variant: Treatment variant data
-
-    Returns:
-        Pooled proportion
-    """
     total_conversions = control.conversions + variant.conversions
     total_users = control.users + variant.users
 
@@ -118,17 +72,6 @@ def calculate_standard_error(
     variant: VariantData,
     pooled: bool = True
 ) -> float:
-    """
-    Calculate standard error for the difference in proportions.
-
-    Args:
-        control: Control variant data
-        variant: Treatment variant data
-        pooled: Whether to use pooled proportion (True for z-test)
-
-    Returns:
-        Standard error
-    """
     if pooled:
         p_pooled = calculate_pooled_proportion(control, variant)
         se = math.sqrt(
@@ -149,18 +92,6 @@ def run_proportion_z_test(
     control: VariantData,
     variant: VariantData
 ) -> Tuple[float, float]:
-    """
-    Run a two-proportion z-test.
-
-    Tests the null hypothesis that the two proportions are equal.
-
-    Args:
-        control: Control variant data
-        variant: Treatment variant data
-
-    Returns:
-        Tuple of (z_score, p_value)
-    """
     p1 = control.conversion_rate
     p2 = variant.conversion_rate
 
@@ -182,17 +113,6 @@ def calculate_confidence_interval(
     variant: VariantData,
     confidence_level: float = 0.95
 ) -> Tuple[float, float]:
-    """
-    Calculate confidence interval for the difference in proportions.
-
-    Args:
-        control: Control variant data
-        variant: Treatment variant data
-        confidence_level: Confidence level (default 0.95 for 95% CI)
-
-    Returns:
-        Tuple of (lower_bound, upper_bound) in percentage points
-    """
     p1 = control.conversion_rate
     p2 = variant.conversion_rate
     diff = p2 - p1
@@ -219,20 +139,6 @@ def calculate_sample_size_requirement(
     alpha: float = 0.05,
     power: float = 0.80
 ) -> int:
-    """
-    Calculate minimum sample size per variant for detecting an effect.
-
-    Uses the formula for two-proportion z-test sample size.
-
-    Args:
-        baseline_rate: Expected baseline conversion rate (0-1)
-        minimum_detectable_effect: Minimum effect to detect in percentage points
-        alpha: Significance level (default 0.05)
-        power: Statistical power (default 0.80)
-
-    Returns:
-        Minimum sample size per variant
-    """
     if baseline_rate <= 0 or baseline_rate >= 1:
         return 0
 
@@ -269,17 +175,6 @@ def calculate_statistical_power(
     variant: VariantData,
     alpha: float = 0.05
 ) -> float:
-    """
-    Calculate the statistical power of the test given the observed data.
-
-    Args:
-        control: Control variant data
-        variant: Treatment variant data
-        alpha: Significance level
-
-    Returns:
-        Statistical power (0-1)
-    """
     p1 = control.conversion_rate
     p2 = variant.conversion_rate
 
@@ -317,21 +212,6 @@ def make_decision(
     analysis: ExperimentAnalysis,
     alpha: float = 0.05
 ) -> Tuple[str, str]:
-    """
-    Make a shipping decision based on the statistical analysis.
-
-    Decision logic:
-    - "ship_variant": Significant positive effect, ship the variant
-    - "keep_control": Significant negative effect, keep control
-    - "inconclusive": Not statistically significant
-
-    Args:
-        analysis: The experiment analysis results
-        alpha: Significance level threshold
-
-    Returns:
-        Tuple of (decision, rationale)
-    """
     if not analysis.sample_size_adequate:
         return (
             "inconclusive",
@@ -372,20 +252,6 @@ def analyze_experiment(
     alpha: float = 0.05,
     minimum_sample_size: Optional[int] = None
 ) -> ExperimentAnalysis:
-    """
-    Perform complete statistical analysis of an A/B experiment.
-
-    This is the main entry point for analyzing experiment results.
-
-    Args:
-        control: Control variant data
-        variant: Treatment variant data
-        alpha: Significance level (default 0.05)
-        minimum_sample_size: Optional minimum sample per variant
-
-    Returns:
-        Complete ExperimentAnalysis with all metrics and decision
-    """
     # Calculate conversion rates
     control_rate = control.conversion_rate
     variant_rate = variant.conversion_rate

@@ -1,15 +1,3 @@
-"""
-Tests for the experimentation statistical analysis functions.
-
-These tests verify:
-- Conversion rate calculations
-- Lift calculations (absolute and relative)
-- Two-proportion z-test implementation
-- Confidence interval calculations
-- Sample size requirements
-- Decision logic
-"""
-
 import pytest
 import math
 from app.services.experiments.stats import (
@@ -29,30 +17,24 @@ from app.services.experiments.stats import (
 
 
 class TestConversionRate:
-    """Tests for conversion rate calculation."""
 
     def test_basic_conversion_rate(self):
-        """Test basic conversion rate calculation."""
         rate = calculate_conversion_rate(25, 100)
         assert rate == 25.0
 
     def test_zero_users(self):
-        """Test conversion rate with zero users."""
         rate = calculate_conversion_rate(0, 0)
         assert rate == 0.0
 
     def test_full_conversion(self):
-        """Test 100% conversion rate."""
         rate = calculate_conversion_rate(100, 100)
         assert rate == 100.0
 
     def test_no_conversions(self):
-        """Test 0% conversion rate."""
         rate = calculate_conversion_rate(0, 100)
         assert rate == 0.0
 
     def test_decimal_precision(self):
-        """Test decimal precision in conversion rate."""
         rate = calculate_conversion_rate(33, 100)
         assert rate == 33.0
 

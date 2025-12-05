@@ -1,17 +1,3 @@
-"""
-DataAutoFixer Service
-
-Automatically fixes common data quality issues in uploaded datasets.
-This service cleans data BEFORE validation so users get insights instead of error messages.
-
-Fixes applied:
-1. Date format standardization (converts various formats to datetime)
-2. Numeric string conversion (strips $, commas, converts to float)
-3. Whitespace trimming
-4. Boolean standardization (yes/no, y/n, 1/0 -> True/False)
-5. Missing value handling for critical columns
-"""
-
 import pandas as pd
 import re
 from typing import List, Dict, Any, Tuple, Optional
@@ -21,7 +7,6 @@ from datetime import datetime
 
 @dataclass
 class FixApplied:
-    """Record of a fix that was applied to the data."""
     column: str
     fix_type: str
     description: str
@@ -32,7 +17,6 @@ class FixApplied:
 
 @dataclass
 class AutoFixResult:
-    """Result of auto-fixing a DataFrame."""
     df: pd.DataFrame
     fixes_applied: List[FixApplied] = field(default_factory=list)
     rows_before: int = 0
@@ -48,7 +32,6 @@ class AutoFixResult:
         return self.total_fixes > 0
 
     def to_summary(self) -> Dict[str, Any]:
-        """Generate a summary dict for API responses."""
         return {
             "was_modified": self.was_modified,
             "total_fixes": self.total_fixes,
@@ -68,15 +51,6 @@ class AutoFixResult:
 
 
 class DataAutoFixer:
-    """
-    Automatically fixes common data quality issues.
-
-    Design principles:
-    - Non-destructive: Never removes data, only transforms it
-    - Transparent: Logs every change made
-    - Conservative: Only fixes obvious issues with high confidence
-    """
-
     # Currency symbols to strip
     CURRENCY_SYMBOLS = r'[\$\£\€\¥\₹\₽\₩\฿]'
 
@@ -122,11 +96,6 @@ class DataAutoFixer:
         self.rows_before = len(df)
 
     def fix_all(self) -> AutoFixResult:
-        """
-        Apply all automatic fixes to the DataFrame.
-
-        Returns an AutoFixResult with the cleaned DataFrame and log of changes.
-        """
         # Order matters - some fixes depend on others
         self._normalize_column_names()  # First: standardize column names
         self._fix_whitespace()
@@ -147,7 +116,6 @@ class DataAutoFixer:
         )
 
     def _normalize_column_names(self):
-        """Normalize column names to standard names expected by metrics."""
         # First, lowercase all column names for easier matching
         original_cols = self.df.columns.tolist()
         normalized_cols = [col.lower().strip().replace(' ', '_') for col in original_cols]
@@ -201,7 +169,6 @@ class DataAutoFixer:
 
     def _add_fix(self, column: str, fix_type: str, description: str,
                  rows_affected: int, sample_before: Any = None, sample_after: Any = None):
-        """Record a fix that was applied."""
         if rows_affected > 0:
             self.fixes_applied.append(FixApplied(
                 column=column,
@@ -213,7 +180,6 @@ class DataAutoFixer:
             ))
 
     def _fix_whitespace(self):
-        """Trim leading/trailing whitespace from all string columns."""
         for col in self.df.select_dtypes(include=['object']).columns:
             original = self.df[col].copy()
 
@@ -235,7 +201,6 @@ class DataAutoFixer:
                     )
 
     def _fix_numeric_strings(self):
-        """Convert numeric strings to actual numbers (handles currency symbols, commas)."""
         for col in self.df.select_dtypes(include=['object']).columns:
             # Check if this column looks like it should be numeric
             if not self._column_looks_numeric(col):
@@ -269,7 +234,6 @@ class DataAutoFixer:
                     )
 
     def _column_looks_numeric(self, col: str) -> bool:
-        """Check if a column appears to contain numeric data stored as strings."""
         col_lower = col.lower()
 
         # Check if column name suggests numeric content
@@ -291,7 +255,6 @@ class DataAutoFixer:
         return pct_numeric >= 0.8 or (name_suggests_numeric and pct_numeric >= 0.5)
 
     def _value_looks_numeric(self, val: Any) -> bool:
-        """Check if a single value looks like a number."""
         if pd.isna(val):
             return False
         if isinstance(val, (int, float)):
@@ -312,7 +275,6 @@ class DataAutoFixer:
             return False
 
     def _convert_to_numeric(self, series: pd.Series) -> Optional[pd.Series]:
-        """Convert a series to numeric, handling currency symbols and commas."""
         def clean_and_convert(val):
             if pd.isna(val):
                 return val
@@ -342,7 +304,6 @@ class DataAutoFixer:
         return None
 
     def _fix_date_columns(self):
-        """Convert date strings to proper datetime objects."""
         for col in self.df.columns:
             col_lower = col.lower()
 
@@ -388,7 +349,6 @@ class DataAutoFixer:
                 pass  # If parsing fails entirely, skip this column
 
     def _column_looks_like_dates(self, col: str) -> bool:
-        """Check if column data looks like date values."""
         if pd.api.types.is_datetime64_any_dtype(self.df[col]):
             return True
 
@@ -404,11 +364,6 @@ class DataAutoFixer:
             return False
 
     def _fix_boolean_strings(self):
-        """Standardize boolean-like strings to consistent lowercase values.
-
-        Note: We keep them as strings (not actual booleans) because downstream
-        metrics code may expect string values for status columns.
-        """
         # Map various boolean representations to standard strings
         STRING_BOOL_MAP = {
             'true': 'true', 'false': 'false',
@@ -489,7 +444,6 @@ class DataAutoFixer:
                 )
 
     def _fix_duplicate_columns(self):
-        """Rename duplicate column names to make them unique."""
         cols = self.df.columns.tolist()
         seen = {}
         new_cols = []
@@ -515,14 +469,5 @@ class DataAutoFixer:
 
 
 def auto_fix_dataframe(df: pd.DataFrame) -> AutoFixResult:
-    """
-    Convenience function to auto-fix a DataFrame.
-
-    Args:
-        df: The DataFrame to fix
-
-    Returns:
-        AutoFixResult with cleaned DataFrame and list of fixes applied
-    """
     fixer = DataAutoFixer(df)
     return fixer.fix_all()

@@ -21,7 +21,6 @@ class MetricsEngine:
             pass
 
     def _has_required_columns(self, metric_class: Type[BaseMetric]) -> bool:
-        """Check if the DataFrame has the required columns for this metric."""
         try:
             instance = metric_class.__new__(metric_class)
             instance.df = pd.DataFrame()
@@ -60,7 +59,6 @@ class MetricsEngine:
         return self.calculate_all(category=category)
 
     def detect_data_type(self) -> Dict[str, any]:
-        """Detect what type of data this is and what metrics are available."""
         cols = self._data_columns
 
         # Check for revenue/financial data indicators

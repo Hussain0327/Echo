@@ -1,9 +1,3 @@
-"""Tests for the Chat API endpoints.
-
-These tests require the full app to be running with database connections.
-Mark them as integration tests if running without Docker.
-"""
-
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient, ASGITransport
@@ -30,11 +24,9 @@ def sample_csv():
 
 
 class TestChatEndpoint:
-    """Tests for POST /chat endpoint."""
 
     @pytest.mark.asyncio
     async def test_chat_basic(self):
-        """Test basic chat request."""
         with patch('app.api.v1.chat.get_conversation_service') as mock_get_service:
             mock_service = MagicMock()
             mock_service.chat = AsyncMock(return_value=ChatResponse(
@@ -59,7 +51,6 @@ class TestChatEndpoint:
 
     @pytest.mark.asyncio
     async def test_chat_with_session_id(self):
-        """Test chat with existing session ID."""
         with patch('app.api.v1.chat.get_conversation_service') as mock_get_service:
             mock_service = MagicMock()
             mock_service.chat = AsyncMock(return_value=ChatResponse(
@@ -85,7 +76,6 @@ class TestChatEndpoint:
 
     @pytest.mark.asyncio
     async def test_chat_service_error(self):
-        """Test handling of service errors."""
         with patch('app.api.v1.chat.get_conversation_service') as mock_get_service:
             mock_service = MagicMock()
             mock_service.chat = AsyncMock(
@@ -105,11 +95,9 @@ class TestChatEndpoint:
 
 
 class TestChatWithDataEndpoint:
-    """Tests for POST /chat/with-data endpoint."""
 
     @pytest.mark.asyncio
     async def test_chat_with_data(self, sample_csv):
-        """Test chat with data file."""
         with patch('app.api.v1.chat.get_conversation_service') as mock_get_service:
             mock_service = MagicMock()
             mock_service.chat = AsyncMock(return_value=ChatResponse(
@@ -134,7 +122,6 @@ class TestChatWithDataEndpoint:
 
     @pytest.mark.asyncio
     async def test_chat_with_data_non_csv(self):
-        """Test rejection of non-CSV files."""
         with patch('app.api.v1.chat.get_conversation_service') as mock_get_service:
             mock_service = MagicMock()
             mock_get_service.return_value = mock_service
@@ -152,7 +139,6 @@ class TestChatWithDataEndpoint:
 
     @pytest.mark.asyncio
     async def test_chat_with_data_empty_file(self):
-        """Test rejection of empty files."""
         with patch('app.api.v1.chat.get_conversation_service') as mock_get_service:
             mock_service = MagicMock()
             mock_get_service.return_value = mock_service
@@ -170,11 +156,9 @@ class TestChatWithDataEndpoint:
 
 
 class TestLoadDataEndpoint:
-    """Tests for POST /chat/load-data endpoint."""
 
     @pytest.mark.asyncio
     async def test_load_data(self, sample_csv):
-        """Test loading data into session."""
         with patch('app.api.v1.chat.get_conversation_service') as mock_get_service:
             mock_service = MagicMock()
             mock_service.update_data_context = MagicMock()
@@ -197,11 +181,9 @@ class TestLoadDataEndpoint:
 
 
 class TestHistoryEndpoint:
-    """Tests for GET /chat/history/{session_id} endpoint."""
 
     @pytest.mark.asyncio
     async def test_get_history(self):
-        """Test getting conversation history."""
         with patch('app.api.v1.chat.get_conversation_service') as mock_get_service:
             mock_service = MagicMock()
             mock_service._sessions = {
@@ -228,7 +210,6 @@ class TestHistoryEndpoint:
 
     @pytest.mark.asyncio
     async def test_get_history_not_found(self):
-        """Test 404 for non-existent session."""
         with patch('app.api.v1.chat.get_conversation_service') as mock_get_service:
             mock_service = MagicMock()
             mock_service._sessions = {}
@@ -242,11 +223,9 @@ class TestHistoryEndpoint:
 
 
 class TestClearSessionEndpoint:
-    """Tests for DELETE /chat/session/{session_id} endpoint."""
 
     @pytest.mark.asyncio
     async def test_clear_session(self):
-        """Test clearing a session."""
         with patch('app.api.v1.chat.get_conversation_service') as mock_get_service:
             mock_service = MagicMock()
             mock_service.clear_session = MagicMock(return_value=True)
@@ -261,7 +240,6 @@ class TestClearSessionEndpoint:
 
     @pytest.mark.asyncio
     async def test_clear_session_not_found(self):
-        """Test clearing non-existent session."""
         with patch('app.api.v1.chat.get_conversation_service') as mock_get_service:
             mock_service = MagicMock()
             mock_service.clear_session = MagicMock(return_value=False)
@@ -275,11 +253,9 @@ class TestClearSessionEndpoint:
 
 
 class TestListSessionsEndpoint:
-    """Tests for GET /chat/sessions endpoint."""
 
     @pytest.mark.asyncio
     async def test_list_sessions(self):
-        """Test listing all sessions."""
         with patch('app.api.v1.chat.get_conversation_service') as mock_get_service:
             mock_service = MagicMock()
             mock_service._sessions = {
@@ -306,7 +282,6 @@ class TestListSessionsEndpoint:
 
     @pytest.mark.asyncio
     async def test_list_sessions_empty(self):
-        """Test listing when no sessions exist."""
         with patch('app.api.v1.chat.get_conversation_service') as mock_get_service:
             mock_service = MagicMock()
             mock_service._sessions = {}

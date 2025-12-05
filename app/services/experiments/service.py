@@ -1,12 +1,3 @@
-"""
-Experiment service for managing A/B tests.
-
-Handles:
-- Creating and updating experiments
-- Submitting variant results
-- Retrieving experiment summaries with statistical analysis
-"""
-
 import uuid
 from datetime import datetime, timezone
 from typing import List, Optional
@@ -34,7 +25,6 @@ from app.services.experiments.stats import (
 
 
 class ExperimentService:
-    """Service for managing A/B experiments."""
 
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -44,16 +34,6 @@ class ExperimentService:
         request: CreateExperimentRequest,
         user_id: str = "default"
     ) -> Experiment:
-        """
-        Create a new experiment.
-
-        Args:
-            request: Experiment creation request
-            user_id: User ID creating the experiment
-
-        Returns:
-            Created Experiment object
-        """
         experiment = Experiment(
             id=str(uuid.uuid4()),
             user_id=user_id,
@@ -79,15 +59,6 @@ class ExperimentService:
         return experiment
 
     async def get_experiment(self, experiment_id: str) -> Optional[Experiment]:
-        """
-        Get an experiment by ID.
-
-        Args:
-            experiment_id: Experiment ID
-
-        Returns:
-            Experiment or None if not found
-        """
         result = await self.db.execute(
             select(Experiment)
             .options(selectinload(Experiment.variants))
@@ -102,18 +73,6 @@ class ExperimentService:
         limit: int = 50,
         offset: int = 0
     ) -> List[Experiment]:
-        """
-        List experiments for a user.
-
-        Args:
-            user_id: User ID
-            status: Optional status filter
-            limit: Max results
-            offset: Pagination offset
-
-        Returns:
-            List of experiments
-        """
         query = (
             select(Experiment)
             .options(selectinload(Experiment.variants))
@@ -134,16 +93,6 @@ class ExperimentService:
         experiment_id: str,
         request: UpdateExperimentRequest
     ) -> Optional[Experiment]:
-        """
-        Update an experiment.
-
-        Args:
-            experiment_id: Experiment ID
-            request: Update request
-
-        Returns:
-            Updated experiment or None if not found
-        """
         experiment = await self.get_experiment(experiment_id)
         if not experiment:
             return None
@@ -171,18 +120,6 @@ class ExperimentService:
         experiment_id: str,
         request: SubmitVariantResultsRequest
     ) -> Optional[Experiment]:
-        """
-        Submit results for experiment variants.
-
-        This will create/update variant results and trigger statistical analysis.
-
-        Args:
-            experiment_id: Experiment ID
-            request: Variant results request
-
-        Returns:
-            Updated experiment with analysis
-        """
         experiment = await self.get_experiment(experiment_id)
         if not experiment:
             return None
@@ -225,12 +162,6 @@ class ExperimentService:
         return experiment
 
     async def _update_experiment_analysis(self, experiment: Experiment) -> None:
-        """
-        Run statistical analysis and update experiment decision.
-
-        Args:
-            experiment: Experiment to analyze
-        """
         if len(experiment.variants) < 2:
             return
 
@@ -284,15 +215,6 @@ class ExperimentService:
         self,
         experiment_id: str
     ) -> Optional[ExperimentSummary]:
-        """
-        Get a complete experiment summary with statistical analysis.
-
-        Args:
-            experiment_id: Experiment ID
-
-        Returns:
-            ExperimentSummary with all metrics and analysis
-        """
         experiment = await self.get_experiment(experiment_id)
         if not experiment:
             return None
@@ -415,15 +337,6 @@ class ExperimentService:
         )
 
     async def delete_experiment(self, experiment_id: str) -> bool:
-        """
-        Delete an experiment and its results.
-
-        Args:
-            experiment_id: Experiment ID
-
-        Returns:
-            True if deleted, False if not found
-        """
         experiment = await self.get_experiment(experiment_id)
         if not experiment:
             return False
@@ -434,16 +347,6 @@ class ExperimentService:
         return True
 
     def to_response(self, experiment: Experiment, variants_loaded: bool = True) -> ExperimentResponse:
-        """
-        Convert Experiment model to response schema.
-
-        Args:
-            experiment: Experiment model
-            variants_loaded: Whether variants relationship is loaded
-
-        Returns:
-            ExperimentResponse schema
-        """
         variants = []
         if variants_loaded:
             variants = [

@@ -1,13 +1,3 @@
-"""
-Chat API - Conversational interface with Echo, the data consultant.
-
-Endpoints:
-- POST /chat - Send a message to Echo
-- POST /chat/load-data - Load data into a chat session
-- GET /chat/history/{session_id} - Get conversation history
-- DELETE /chat/session/{session_id} - Clear a session
-"""
-
 from fastapi import APIRouter, UploadFile, File, HTTPException, Query
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
@@ -30,27 +20,23 @@ router = APIRouter()
 
 
 class ChatRequest(BaseModel):
-    """Request to send a message to Echo."""
     message: str
     session_id: Optional[str] = None
 
 
 class ChatMessageResponse(BaseModel):
-    """Response from Echo."""
     response: str
     session_id: str
     timestamp: datetime
 
 
 class SessionHistoryResponse(BaseModel):
-    """Conversation history for a session."""
     session_id: str
     messages: List[Dict[str, Any]]
     data_loaded: bool
 
 
 class DataLoadResponse(BaseModel):
-    """Response after loading data into a session."""
     session_id: str
     message: str
     rows: int
@@ -60,11 +46,6 @@ class DataLoadResponse(BaseModel):
 
 @router.post("", response_model=ChatMessageResponse)
 async def chat(request: ChatRequest):
-    """
-    Send a message to Echo and get a response.
-
-    If no session_id is provided, a new session will be created.
-    """
     service = get_conversation_service()
 
     # Generate session ID if not provided
@@ -95,11 +76,6 @@ async def chat_with_data(
     file: UploadFile = File(..., description="CSV file with your data"),
     calculate_metrics: bool = Query(True, description="Auto-calculate metrics"),
 ):
-    """
-    Send a message to Echo along with data file.
-
-    This loads the data into the session context so Echo can analyze it.
-    """
     if not file.filename.endswith('.csv'):
         raise HTTPException(status_code=400, detail="File must be CSV")
 
@@ -170,11 +146,6 @@ async def load_data_to_session(
     file: UploadFile = File(..., description="CSV file with your data"),
     calculate_metrics: bool = Query(True, description="Auto-calculate metrics"),
 ):
-    """
-    Load data into an existing chat session.
-
-    This updates the session context so Echo can reference the data in subsequent messages.
-    """
     if not file.filename.endswith('.csv'):
         raise HTTPException(status_code=400, detail="File must be CSV")
 
@@ -239,7 +210,6 @@ async def load_data_to_session(
 
 @router.get("/history/{session_id}", response_model=SessionHistoryResponse)
 async def get_history(session_id: str):
-    """Get the conversation history for a session."""
     service = get_conversation_service()
     session = service._sessions.get(session_id)
 
@@ -264,7 +234,6 @@ async def get_history(session_id: str):
 
 @router.delete("/session/{session_id}")
 async def clear_session(session_id: str):
-    """Clear a conversation session."""
     service = get_conversation_service()
 
     if service.clear_session(session_id):
@@ -275,7 +244,6 @@ async def clear_session(session_id: str):
 
 @router.get("/sessions")
 async def list_sessions():
-    """List all active sessions (for debugging/admin)."""
     service = get_conversation_service()
 
     sessions = []

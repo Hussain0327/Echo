@@ -24,12 +24,6 @@ async def create_experiment(
     request: CreateExperimentRequest,
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Create a new A/B experiment.
-
-    Define the experiment hypothesis, primary metric, and configuration.
-    The experiment starts in DRAFT status until results are submitted.
-    """
     service = ExperimentService(db)
     experiment = await service.create_experiment(request)
     # variants_loaded=False because newly created experiments have no variants yet
@@ -43,11 +37,6 @@ async def list_experiments(
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    List all experiments.
-
-    Optionally filter by status (draft, running, completed, stopped).
-    """
     service = ExperimentService(db)
     experiments = await service.list_experiments(
         status=status,
@@ -66,9 +55,6 @@ async def get_experiment(
     experiment_id: str,
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Get experiment details by ID.
-    """
     service = ExperimentService(db)
     experiment = await service.get_experiment(experiment_id)
 
@@ -83,14 +69,6 @@ async def get_experiment_summary(
     experiment_id: str,
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Get complete experiment summary with statistical analysis.
-
-    Returns:
-    - Variant results (control and treatment)
-    - Statistical metrics (lift, confidence interval, p-value)
-    - Decision recommendation (ship/hold/inconclusive)
-    """
     service = ExperimentService(db)
     summary = await service.get_experiment_summary(experiment_id)
 
@@ -106,11 +84,6 @@ async def update_experiment(
     request: UpdateExperimentRequest,
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Update an experiment.
-
-    Can update name, hypothesis, description, status, and end date.
-    """
     service = ExperimentService(db)
     experiment = await service.update_experiment(experiment_id, request)
 
@@ -126,22 +99,6 @@ async def submit_variant_results(
     request: SubmitVariantResultsRequest,
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Submit results for experiment variants.
-
-    Provide aggregated results for each variant (control and treatment).
-    This will trigger statistical analysis and update the experiment decision.
-
-    Example request:
-    ```json
-    {
-        "variants": [
-            {"variant_name": "control", "is_control": true, "users": 1000, "conversions": 225},
-            {"variant_name": "new_onboarding", "is_control": false, "users": 1000, "conversions": 261}
-        ]
-    }
-    ```
-    """
     service = ExperimentService(db)
     experiment = await service.submit_variant_results(experiment_id, request)
 
@@ -158,9 +115,6 @@ async def delete_experiment(
     experiment_id: str,
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Delete an experiment and all its results.
-    """
     service = ExperimentService(db)
     deleted = await service.delete_experiment(experiment_id)
 
@@ -175,18 +129,6 @@ async def explain_experiment(
     experiment_id: str,
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Get an LLM-generated explanation of the experiment results.
-
-    Uses DeepSeek to generate a business-friendly explanation of:
-    - What the experiment tested
-    - What the results show
-    - What the recommendation is
-    - Important caveats and next steps
-
-    Note: The LLM only explains pre-computed deterministic statistics.
-    It does not perform any calculations itself.
-    """
     service = ExperimentService(db)
     summary = await service.get_experiment_summary(experiment_id)
 

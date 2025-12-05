@@ -173,12 +173,7 @@ class PortfolioStats(BaseModel):
     headline_metrics: Dict[str, str]
 
 
-# ============================================================
-# Experimentation / A/B Testing Schemas
-# ============================================================
-
 class ExperimentStatusEnum(str, Enum):
-    """Status of an experiment lifecycle."""
     DRAFT = "draft"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -186,7 +181,6 @@ class ExperimentStatusEnum(str, Enum):
 
 
 class ExperimentDecisionEnum(str, Enum):
-    """Decision outcome after statistical analysis."""
     SHIP_VARIANT = "ship_variant"
     KEEP_CONTROL = "keep_control"
     INCONCLUSIVE = "inconclusive"
@@ -194,7 +188,6 @@ class ExperimentDecisionEnum(str, Enum):
 
 
 class CreateExperimentRequest(BaseModel):
-    """Request body for creating a new experiment."""
     name: str = Field(..., min_length=1, max_length=200)
     hypothesis: str = Field(..., min_length=10, description="The hypothesis being tested")
     description: Optional[str] = None
@@ -209,7 +202,6 @@ class CreateExperimentRequest(BaseModel):
 
 
 class UpdateExperimentRequest(BaseModel):
-    """Request body for updating an experiment."""
     name: Optional[str] = Field(None, min_length=1, max_length=200)
     hypothesis: Optional[str] = None
     description: Optional[str] = None
@@ -219,7 +211,6 @@ class UpdateExperimentRequest(BaseModel):
 
 
 class VariantResultRequest(BaseModel):
-    """Request body for submitting variant results."""
     variant_name: str = Field(..., description="Name of the variant (e.g., 'control', 'variant_a')")
     is_control: bool = Field(False, description="Whether this is the control group")
     users: int = Field(..., ge=1, description="Total users in this variant")
@@ -230,12 +221,10 @@ class VariantResultRequest(BaseModel):
 
 
 class SubmitVariantResultsRequest(BaseModel):
-    """Request body for submitting results for multiple variants."""
     variants: List[VariantResultRequest] = Field(..., min_length=2, description="Results for each variant (min 2)")
 
 
 class VariantResultResponse(BaseModel):
-    """Response for a single variant's results."""
     id: str
     variant_name: str
     is_control: bool
@@ -252,7 +241,6 @@ class VariantResultResponse(BaseModel):
 
 
 class StatisticalResult(BaseModel):
-    """Statistical analysis results for an experiment."""
     control_conversion_rate: float
     variant_conversion_rate: float
     absolute_lift: float  # Percentage points difference
@@ -267,7 +255,6 @@ class StatisticalResult(BaseModel):
 
 
 class ExperimentSummary(BaseModel):
-    """Complete summary of an experiment with statistical analysis."""
     id: str
     name: str
     hypothesis: str
@@ -295,7 +282,6 @@ class ExperimentSummary(BaseModel):
 
 
 class ExperimentResponse(BaseModel):
-    """Response for experiment details."""
     id: str
     name: str
     hypothesis: str
@@ -318,13 +304,11 @@ class ExperimentResponse(BaseModel):
 
 
 class ExperimentListResponse(BaseModel):
-    """Response for listing experiments."""
     experiments: List[ExperimentResponse]
     total: int
 
 
 class ExperimentExplanation(BaseModel):
-    """LLM-generated explanation of experiment results."""
     experiment_id: str
     summary: str  # One-paragraph executive summary
     key_findings: List[str]  # Bullet points

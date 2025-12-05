@@ -1,10 +1,3 @@
-"""
-LLM-powered experiment explanation service.
-
-Uses DeepSeek to generate business-friendly explanations of A/B test results.
-The LLM only explains pre-computed statistics - it does NOT perform any calculations.
-"""
-
 from typing import Optional
 from openai import AsyncOpenAI
 
@@ -34,7 +27,6 @@ Your response format should include:
 
 
 def build_experiment_context(summary: ExperimentSummary) -> str:
-    """Build the context string for the LLM from experiment data."""
     stats = summary.statistics
 
     context = f"""
@@ -65,7 +57,6 @@ RATIONALE: {summary.decision_rationale}
 
 
 class ExperimentExplainer:
-    """Service for generating LLM explanations of experiment results."""
 
     def __init__(self):
         settings = get_settings()
@@ -77,15 +68,6 @@ class ExperimentExplainer:
         self.model = settings.DEEPSEEK_MODEL if settings.DEEPSEEK_API_KEY else "gpt-4-turbo-preview"
 
     async def explain(self, summary: ExperimentSummary) -> ExperimentExplanation:
-        """
-        Generate a business-friendly explanation of experiment results.
-
-        Args:
-            summary: ExperimentSummary with statistical analysis
-
-        Returns:
-            ExperimentExplanation with narrative sections
-        """
         context = build_experiment_context(summary)
 
         user_prompt = f"""Based on the following A/B test results, provide a business-friendly explanation.
@@ -136,7 +118,6 @@ NEXT STEPS:
         experiment_id: str,
         content: str
     ) -> ExperimentExplanation:
-        """Parse LLM response into structured explanation."""
         # Default values in case parsing fails
         summary_text = ""
         key_findings = []

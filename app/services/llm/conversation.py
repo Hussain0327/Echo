@@ -54,7 +54,6 @@ class ConversationService:
         self._sessions: Dict[str, ConversationContext] = {}
 
     def get_or_create_session(self, session_id: str) -> ConversationContext:
-        """Get existing session or create a new one."""
         if session_id not in self._sessions:
             self._sessions[session_id] = ConversationContext(session_id=session_id)
         return self._sessions[session_id]
@@ -65,7 +64,6 @@ class ConversationService:
         data_summary: Optional[str] = None,
         metrics_summary: Optional[str] = None
     ) -> None:
-        """Update the data context for a session."""
         session = self.get_or_create_session(session_id)
         if data_summary is not None:
             session.data_summary = data_summary
@@ -73,7 +71,6 @@ class ConversationService:
             session.metrics_summary = metrics_summary
 
     def _format_conversation_history(self, messages: List[Message], max_messages: int = 10) -> str:
-        """Format recent conversation history for context."""
         if not messages:
             return "This is the start of the conversation."
 
@@ -87,7 +84,6 @@ class ConversationService:
         return "\n".join(formatted)
 
     def _build_messages(self, session: ConversationContext, user_message: str) -> List[Dict[str, str]]:
-        """Build the messages array for the API call."""
         # Build system prompt with context
         conversation_history = self._format_conversation_history(session.messages)
         system_prompt = build_system_prompt(
@@ -149,14 +145,12 @@ class ConversationService:
         )
 
     def clear_session(self, session_id: str) -> bool:
-        """Clear a conversation session."""
         if session_id in self._sessions:
             del self._sessions[session_id]
             return True
         return False
 
     def get_session_history(self, session_id: str) -> List[Message]:
-        """Get the message history for a session."""
         session = self._sessions.get(session_id)
         return session.messages if session else []
 
@@ -166,7 +160,6 @@ _conversation_service: Optional[ConversationService] = None
 
 
 def get_conversation_service() -> ConversationService:
-    """Get the conversation service singleton."""
     global _conversation_service
     if _conversation_service is None:
         _conversation_service = ConversationService()
