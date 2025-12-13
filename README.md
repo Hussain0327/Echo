@@ -1,4 +1,4 @@
-# Echo
+# Echo Analytics Platform
 
 An analytics platform I built to turn messy business data into something useful. Upload a CSV, get metrics, see trends, ask questions in plain English.
 
