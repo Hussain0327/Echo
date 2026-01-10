@@ -1,63 +1,244 @@
 version: 2
 
 models:
+  # ============================================================================
+  # TRANSACTIONS STAGING
+  # ============================================================================
   - name: stg_transactions
-    description: Cleaned transaction data
+    description: |
+      Cleaned transaction data from raw revenue uploads.
+      Primary staging model for financial metrics.
+      Filters out null/zero amounts, standardizes status values.
     columns:
       - name: transaction_id
-        description: Unique transaction identifier
+        description: Surrogate key generated from date + amount
         tests:
           - unique
           - not_null
-      - name: amount
-        description: Transaction amount
+      - name: transaction_date
+        description: Date of the transaction
         tests:
           - not_null
-      - name: transaction_date
+      - name: amount
+        description: Transaction amount in USD
         tests:
           - not_null
       - name: status
+        description: Transaction status (standardized to lowercase)
         tests:
+          - not_null
           - accepted_values:
               values: ['completed', 'paid', 'pending', 'refunded', 'cancelled', 'failed']
-
-  - name: stg_marketing_events
-    description: Cleaned marketing event data
-    columns:
-      - name: event_id
-        tests:
-          - unique
-          - not_null
-      - name: channel
+      - name: customer_id
+        description: Customer identifier (defaults to 'unknown')
         tests:
           - not_null
-      - name: leads
+      - name: product_id
+        description: Product identifier (defaults to 'unknown')
+        tests:
+          - not_null
+      - name: _loaded_at
+        description: ETL load timestamp
         tests:
           - not_null
 
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "amount > 0"
+          config:
+            severity: error
+      - dbt_utils.expression_is_true:
+          expression: "transaction_date <= CURRENT_DATE"
+          config:
+            severity: warn
+
+  # ============================================================================
+  # CUSTOMERS STAGING
+  # ============================================================================
   - name: stg_customers
-    description: Cleaned customer data
+    description: |
+      Cleaned customer master data.
+      Source of truth for customer attributes and segmentation.
     columns:
       - name: customer_id
+        description: Unique customer identifier
         tests:
           - unique
           - not_null
       - name: email
+        description: Customer email address
+        tests:
+          - not_null
+          - unique
+      - name: name
+        description: Customer full name
+      - name: segment
+        description: Customer segment classification
+        tests:
+          - accepted_values:
+              values: ['starter', 'growth', 'professional', 'enterprise']
+              config:
+                where: "segment IS NOT NULL"
+      - name: plan_type
+        description: Subscription plan type
+        tests:
+          - accepted_values:
+              values: ['free', 'basic', 'standard', 'premium', 'enterprise']
+              config:
+                where: "plan_type IS NOT NULL"
+      - name: acquisition_channel
+        description: Channel through which customer was acquired
+      - name: created_at
+        description: Account creation timestamp
         tests:
           - not_null
 
-  - name: stg_experiment_assignments
-    description: Cleaned experiment assignment data
+  # ============================================================================
+  # PRODUCTS STAGING
+  # ============================================================================
+  - name: stg_products
+    description: |
+      Cleaned product catalog data.
+      Derived from transaction data when no dedicated product source exists.
+      Categories assigned based on product_id hash for consistency.
     columns:
-      - name: assignment_id
+      - name: product_id
+        description: Unique product identifier
         tests:
           - unique
           - not_null
+      - name: name
+        description: Product display name
+        tests:
+          - not_null
+      - name: category
+        description: Product category
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['analytics', 'integration', 'automation', 'reporting', 'api_access', 'other']
+      - name: price
+        description: Product price in USD
+        tests:
+          - not_null
+      - name: created_at
+        description: First appearance timestamp
+        tests:
+          - not_null
+      - name: _loaded_at
+        description: ETL load timestamp
+        tests:
+          - not_null
+
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "price >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "price <= 10000"
+          config:
+            severity: warn
+
+  # ============================================================================
+  # MARKETING EVENTS STAGING
+  # ============================================================================
+  - name: stg_marketing_events
+    description: |
+      Cleaned marketing event and campaign data.
+      Tracks leads, conversions, spend, and revenue by channel.
+    columns:
+      - name: event_id
+        description: Unique event identifier
+        tests:
+          - unique
+          - not_null
+      - name: event_date
+        description: Date of the marketing event
+        tests:
+          - not_null
+      - name: channel
+        description: Marketing channel (e.g., organic, paid_search, social)
+        tests:
+          - not_null
+      - name: leads
+        description: Number of leads generated
+        tests:
+          - not_null
+      - name: conversions
+        description: Number of conversions
+        tests:
+          - not_null
+      - name: spend
+        description: Marketing spend amount
+        tests:
+          - not_null
+      - name: revenue
+        description: Revenue attributed to this event
+
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "leads >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "conversions >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "conversions <= leads"
+          config:
+            severity: warn
+      - dbt_utils.expression_is_true:
+          expression: "spend >= 0"
+
+  # ============================================================================
+  # EXPERIMENT ASSIGNMENTS STAGING
+  # ============================================================================
+  - name: stg_experiment_assignments
+    description: |
+      Cleaned A/B test experiment assignment data.
+      Tracks user assignments to experiment variants and conversion outcomes.
+    columns:
+      - name: assignment_id
+        description: Unique assignment identifier
+        tests:
+          - unique
+          - not_null
+      - name: experiment_name
+        description: Name of the experiment
+        tests:
+          - not_null
       - name: user_id
+        description: User identifier
         tests:
           - not_null
       - name: variant
+        description: Assigned experiment variant
         tests:
           - not_null
           - accepted_values:
               values: ['control', 'variant_a', 'variant_b', 'variant_c', 'treatment']
+      - name: is_control
+        description: Boolean flag for control group
+        tests:
+          - not_null
+          - accepted_values:
+              values: [true, false]
+      - name: converted
+        description: Binary conversion flag (0 or 1)
+        tests:
+          - accepted_values:
+              values: [0, 1]
+              config:
+                where: "converted IS NOT NULL"
+      - name: revenue
+        description: Revenue from this user in the experiment
+      - name: assigned_at
+        description: Timestamp of variant assignment
+        tests:
+          - not_null
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - experiment_name
+            - user_id
+          config:
+            severity: warn
+      - dbt_utils.expression_is_true:
+          expression: "COALESCE(revenue, 0) >= 0"

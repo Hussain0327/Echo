@@ -30,3 +30,26 @@ echo:
       dbname: "{{ env_var('DB_NAME', 'echo_test') }}"
       schema: ci
       threads: 2
+
+    # AWS Redshift targets
+    redshift:
+      type: redshift
+      host: "{{ env_var('REDSHIFT_HOST') }}"
+      port: "{{ env_var('REDSHIFT_PORT', '5439') | int }}"
+      user: "{{ env_var('REDSHIFT_USER') }}"
+      password: "{{ env_var('REDSHIFT_PASSWORD') }}"
+      dbname: "{{ env_var('REDSHIFT_DATABASE') }}"
+      schema: "{{ env_var('REDSHIFT_SCHEMA', 'public') }}"
+      threads: 4
+      ra3_node: true  # Enable RA3 features if using RA3 nodes
+
+    redshift_prod:
+      type: redshift
+      host: "{{ env_var('REDSHIFT_HOST') }}"
+      port: "{{ env_var('REDSHIFT_PORT', '5439') | int }}"
+      user: "{{ env_var('REDSHIFT_USER') }}"
+      password: "{{ env_var('REDSHIFT_PASSWORD') }}"
+      dbname: "{{ env_var('REDSHIFT_DATABASE') }}"
+      schema: analytics
+      threads: 8
+      ra3_node: true

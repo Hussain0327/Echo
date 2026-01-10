@@ -1,7 +1,8 @@
 {
   "expectation_suite_name": "marketing_data_suite",
   "meta": {
-    "great_expectations_version": "0.18.0"
+    "great_expectations_version": "0.18.0",
+    "notes": "Comprehensive data quality expectations for marketing funnel data"
   },
   "expectations": [
     {
@@ -23,6 +24,18 @@
       }
     },
     {
+      "expectation_type": "expect_column_to_exist",
+      "kwargs": {
+        "column": "date"
+      }
+    },
+    {
+      "expectation_type": "expect_column_to_exist",
+      "kwargs": {
+        "column": "spend"
+      }
+    },
+    {
       "expectation_type": "expect_column_values_to_not_be_null",
       "kwargs": {
         "column": "source"
@@ -32,6 +45,12 @@
       "expectation_type": "expect_column_values_to_not_be_null",
       "kwargs": {
         "column": "leads"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "date"
       }
     },
     {
@@ -46,6 +65,17 @@
       "kwargs": {
         "column": "conversions",
         "min_value": 0
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "spend",
+        "min_value": 0,
+        "max_value": 1000000
+      },
+      "meta": {
+        "notes": "Daily spend should be under 1M"
       }
     },
     {
@@ -64,6 +94,19 @@
       "kwargs": {
         "column": "source",
         "value_set": ["organic", "paid_search", "paid_social", "email", "referral", "direct", "affiliate", "display", "content", "other"]
+      }
+    },
+    {
+      "expectation_type": "expect_table_row_count_to_be_between",
+      "kwargs": {
+        "min_value": 1
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "leads",
+        "type_": "int64"
       }
     }
   ]

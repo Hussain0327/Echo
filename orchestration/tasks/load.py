@@ -136,3 +136,149 @@ def upsert_to_table(
         "rows": len(df),
         "key_columns": key_columns,
     }
+
+
+# =============================================================================
+# AWS Redshift Tasks
+# =============================================================================
+
+
+@task(retries=2, retry_delay_seconds=30)
+def load_to_redshift(
+    df: pd.DataFrame,
+    table_name: str,
+    schema: str = "staging",
+    if_exists: str = "append",
+) -> dict:
+    """
+    Load DataFrame directly to Redshift.
+
+    For large datasets (>100k rows), use copy_s3_to_redshift for better performance.
+
+    Args:
+        df: DataFrame to load
+        table_name: Target table name
+        schema: Target schema
+        if_exists: How to handle existing table ('fail', 'replace', 'append')
+
+    Returns:
+        Dict with load statistics
+    """
+    logger = get_run_logger()
+    from app.core.redshift import load_dataframe
+
+    df["_loaded_at"] = datetime.utcnow()
+
+    result = load_dataframe(df, table_name, schema, if_exists)
+
+    if result["success"]:
+        logger.info(f"Loaded {len(df)} rows to Redshift {schema}.{table_name}")
+    else:
+        logger.error(f"Failed to load to Redshift: {result.get('error')}")
+
+    return result
+
+
+@task(retries=3, retry_delay_seconds=60)
+def copy_s3_to_redshift(
+    s3_path: str,
+    table_name: str,
+    schema: str = "staging",
+    iam_role: Optional[str] = None,
+    file_format: str = "PARQUET",
+) -> dict:
+    """
+    Load data from S3 to Redshift using COPY command.
+
+    This is the recommended method for large datasets as it:
+    - Uses parallel loading across Redshift nodes
+    - Bypasses the leader node bottleneck
+    - Handles compression automatically
+
+    Args:
+        s3_path: Full S3 path (s3://bucket/key or s3://bucket/prefix/)
+        table_name: Target table name
+        schema: Target schema
+        iam_role: IAM role ARN (uses credentials if None)
+        file_format: Data format (PARQUET, CSV, JSON)
+
+    Returns:
+        Dict with copy statistics
+    """
+    logger = get_run_logger()
+    from app.core.redshift import copy_from_s3
+
+    result = copy_from_s3(
+        s3_path=s3_path,
+        table_name=table_name,
+        schema=schema,
+        iam_role=iam_role,
+        file_format=file_format,
+    )
+
+    if result["success"]:
+        logger.info(f"COPY from {s3_path} to Redshift {schema}.{table_name} completed")
+        if result.get("errors"):
+            logger.warning(f"COPY had {len(result['errors'])} errors")
+    else:
+        logger.error(f"COPY failed: {result.get('error')}")
+
+    return result
+
+
+@task(retries=2, retry_delay_seconds=30)
+def unload_redshift_to_s3(
+    query: str,
+    s3_path: str,
+    iam_role: Optional[str] = None,
+    file_format: str = "PARQUET",
+) -> dict:
+    """
+    Export data from Redshift to S3 using UNLOAD.
+
+    Args:
+        query: SELECT query to export
+        s3_path: S3 destination path
+        iam_role: IAM role ARN
+        file_format: Output format (PARQUET, CSV)
+
+    Returns:
+        Dict with unload statistics
+    """
+    logger = get_run_logger()
+    from app.core.redshift import unload_to_s3
+
+    result = unload_to_s3(
+        query=query,
+        s3_path=s3_path,
+        iam_role=iam_role,
+        file_format=file_format,
+    )
+
+    if result["success"]:
+        logger.info(f"UNLOAD to {s3_path} completed")
+    else:
+        logger.error(f"UNLOAD failed: {result.get('error')}")
+
+    return result
+
+
+@task
+def test_redshift_connection() -> dict:
+    """
+    Test Redshift connection.
+
+    Returns:
+        Dict with connection status
+    """
+    logger = get_run_logger()
+    from app.core.redshift import test_connection
+
+    result = test_connection()
+
+    if result["success"]:
+        logger.info(f"Connected to Redshift as {result['user']}@{result['database']}")
+    else:
+        logger.error(f"Redshift connection failed: {result.get('error')}")
+
+    return result

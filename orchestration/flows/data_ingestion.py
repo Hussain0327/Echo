@@ -5,6 +5,7 @@ from typing import Optional
 
 from prefect import flow, get_run_logger
 
+from orchestration.notifications import notify_on_failure
 from orchestration.tasks.extract import extract_csv, extract_excel
 from orchestration.tasks.load import load_to_staging
 from orchestration.tasks.transform import apply_transformations, run_dbt
@@ -53,7 +54,14 @@ DATA_EXPECTATIONS = {
 }
 
 
-@flow(name="data_ingestion_pipeline", log_prints=True)
+@flow(
+    name="data_ingestion_pipeline",
+    log_prints=True,
+    retries=3,
+    retry_delay_seconds=60,
+    timeout_seconds=1800,
+    on_failure=[notify_on_failure],
+)
 def data_ingestion_pipeline(
     file_path: str,
     data_type: str,
@@ -108,7 +116,14 @@ def data_ingestion_pipeline(
     }
 
 
-@flow(name="batch_ingestion_pipeline", log_prints=True)
+@flow(
+    name="batch_ingestion_pipeline",
+    log_prints=True,
+    retries=2,
+    retry_delay_seconds=120,
+    timeout_seconds=3600,
+    on_failure=[notify_on_failure],
+)
 def batch_ingestion_pipeline(
     source_directory: str,
     data_type: str,

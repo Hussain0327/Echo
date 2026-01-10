@@ -7,7 +7,7 @@ from app.api.v1.router import api_router
 from app.config import get_settings
 from app.core.cache import close_redis
 from app.core.database import close_db, init_db
-from app.middleware import TelemetryMiddleware
+from app.middleware import APIKeyAuthMiddleware, RateLimitMiddleware, TelemetryMiddleware
 from app.models.data_source import DataSource  # noqa: F401
 from app.models.experiment import Experiment, VariantResult  # noqa: F401
 from app.models.feedback import Feedback  # noqa: F401
@@ -51,6 +51,16 @@ if settings.CORS_ORIGINS:
     )
 
 app.add_middleware(TelemetryMiddleware)
+
+# Rate limiting middleware
+app.add_middleware(
+    RateLimitMiddleware,
+    requests_per_minute=settings.RATE_LIMIT_PER_MINUTE,
+    burst_size=settings.RATE_LIMIT_BURST_SIZE,
+)
+
+# API Key authentication middleware
+app.add_middleware(APIKeyAuthMiddleware)
 
 # Include routers
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)

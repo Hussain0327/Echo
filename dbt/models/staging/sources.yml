@@ -2,47 +2,142 @@ version: 2
 
 sources:
   - name: raw
-    description: Raw data loaded from CSV uploads and external sources
+    description: |
+      Raw data loaded from CSV uploads and external sources.
+      This is the bronze layer of the medallion architecture.
+      All data goes through validation before landing here.
     schema: public
+
+    # Source freshness configuration
+    # Run with: dbt source freshness
+    freshness:
+      warn_after: {count: 24, period: hour}
+      error_after: {count: 48, period: hour}
+    loaded_at_field: _loaded_at
+
     tables:
+      # ======================================================================
+      # REVENUE / TRANSACTIONS
+      # ======================================================================
       - name: stg_revenue
-        description: Raw revenue/transaction data from uploads
+        description: |
+          Raw revenue/transaction data from CSV uploads.
+          Primary source for financial metrics and MRR calculations.
+        freshness:
+          warn_after: {count: 12, period: hour}
+          error_after: {count: 24, period: hour}
         columns:
           - name: date
             description: Transaction date
+            tests:
+              - not_null
           - name: amount
-            description: Transaction amount
+            description: Transaction amount in USD
+            tests:
+              - not_null
           - name: status
             description: Transaction status
+          - name: customer_id
+            description: Customer identifier
+          - name: product_id
+            description: Product identifier
+          - name: _loaded_at
+            description: ETL ingestion timestamp
 
+      # ======================================================================
+      # MARKETING
+      # ======================================================================
       - name: stg_marketing
-        description: Raw marketing data from uploads
+        description: |
+          Raw marketing data from CSV uploads.
+          Tracks leads, conversions, spend, and campaign performance.
+        freshness:
+          warn_after: {count: 24, period: hour}
+          error_after: {count: 72, period: hour}
         columns:
           - name: date
             description: Date of marketing activity
+            tests:
+              - not_null
           - name: source
             description: Marketing channel/source
+            tests:
+              - not_null
           - name: leads
             description: Number of leads generated
+            tests:
+              - not_null
           - name: conversions
             description: Number of conversions
+          - name: spend
+            description: Marketing spend amount
+          - name: revenue
+            description: Attributed revenue
+          - name: _loaded_at
+            description: ETL ingestion timestamp
 
+      # ======================================================================
+      # CUSTOMERS
+      # ======================================================================
       - name: stg_customers
-        description: Raw customer data
+        description: |
+          Raw customer master data.
+          Contains customer profiles, segments, and plan information.
+        freshness:
+          warn_after: {count: 48, period: hour}
+          error_after: {count: 168, period: hour}  # 1 week
         columns:
           - name: customer_id
             description: Unique customer identifier
+            tests:
+              - unique
+              - not_null
           - name: email
-            description: Customer email
+            description: Customer email address
+            tests:
+              - not_null
+          - name: name
+            description: Customer full name
+          - name: segment
+            description: Customer segment (starter, growth, professional, enterprise)
+          - name: plan_type
+            description: Subscription plan type
+          - name: acquisition_channel
+            description: Channel through which customer was acquired
           - name: created_at
-            description: Account creation date
+            description: Account creation timestamp
+          - name: _loaded_at
+            description: ETL ingestion timestamp
 
+      # ======================================================================
+      # EXPERIMENTS
+      # ======================================================================
       - name: stg_experiments
-        description: Raw experiment assignment data
+        description: |
+          Raw A/B test experiment assignment data.
+          Tracks user variant assignments and conversion outcomes.
+        freshness:
+          warn_after: {count: 24, period: hour}
+          error_after: {count: 72, period: hour}
         columns:
           - name: user_id
             description: User identifier
+            tests:
+              - not_null
+          - name: experiment_name
+            description: Name of the experiment
+            tests:
+              - not_null
           - name: variant
             description: Experiment variant assigned
+            tests:
+              - not_null
           - name: converted
-            description: Whether user converted
+            description: Whether user converted (0 or 1)
+          - name: revenue
+            description: Revenue from this user
+          - name: assigned_at
+            description: Timestamp of variant assignment
+          - name: _loaded_at
+            description: ETL ingestion timestamp
+

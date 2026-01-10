@@ -1,7 +1,8 @@
 {
   "expectation_suite_name": "experiment_data_suite",
   "meta": {
-    "great_expectations_version": "0.18.0"
+    "great_expectations_version": "0.18.0",
+    "notes": "Data quality expectations for A/B test experiment data"
   },
   "expectations": [
     {
@@ -17,6 +18,12 @@
       }
     },
     {
+      "expectation_type": "expect_column_to_exist",
+      "kwargs": {
+        "column": "experiment_name"
+      }
+    },
+    {
       "expectation_type": "expect_column_values_to_not_be_null",
       "kwargs": {
         "column": "user_id"
@@ -29,9 +36,15 @@
       }
     },
     {
-      "expectation_type": "expect_column_values_to_be_unique",
+      "expectation_type": "expect_column_values_to_not_be_null",
       "kwargs": {
-        "column": "user_id"
+        "column": "experiment_name"
+      }
+    },
+    {
+      "expectation_type": "expect_compound_columns_to_be_unique",
+      "kwargs": {
+        "column_list": ["experiment_name", "user_id"]
       },
       "meta": {
         "notes": "Each user should only appear once per experiment"
@@ -61,6 +74,28 @@
       },
       "meta": {
         "notes": "Need at least 100 users for meaningful analysis"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "revenue",
+        "min_value": 0,
+        "max_value": 100000
+      },
+      "meta": {
+        "notes": "Revenue should be reasonable per user"
+      }
+    },
+    {
+      "expectation_type": "expect_column_proportion_of_unique_values_to_be_between",
+      "kwargs": {
+        "column": "variant",
+        "min_value": 0.1,
+        "max_value": 1.0
+      },
+      "meta": {
+        "notes": "Should have multiple variants represented"
       }
     }
   ]

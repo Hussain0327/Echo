@@ -4,11 +4,16 @@ pytest-asyncio==0.21.1
 pytest-cov==4.1.0
 pytest-mock==3.12.0
 
-# Code Quality
-black==23.11.0
+# Code Quality & Linting
+black==23.12.1
+ruff==0.1.9
 flake8==6.1.0
 isort==5.12.0
 mypy==1.7.1
+
+# SQL Linting
+sqlfluff==3.0.0
+sqlfluff-templater-dbt==3.0.0
 
 # Development
 ipython==8.18.1

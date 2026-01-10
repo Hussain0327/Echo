@@ -2,6 +2,7 @@ from datetime import datetime
 
 from prefect import flow, get_run_logger, task
 
+from orchestration.notifications import notify_on_failure
 from orchestration.tasks.extract import extract_csv
 from orchestration.tasks.validate import run_expectations
 
@@ -117,7 +118,14 @@ def generate_experiment_report(
     return report
 
 
-@flow(name="experiment_analysis_pipeline", log_prints=True)
+@flow(
+    name="experiment_analysis_pipeline",
+    log_prints=True,
+    retries=2,
+    retry_delay_seconds=30,
+    timeout_seconds=1800,
+    on_failure=[notify_on_failure],
+)
 def experiment_analysis_pipeline(
     data_file: str,
     experiment_name: str,
@@ -149,7 +157,13 @@ def experiment_analysis_pipeline(
     return report
 
 
-@flow(name="multi_experiment_analysis", log_prints=True)
+@flow(
+    name="multi_experiment_analysis",
+    log_prints=True,
+    retries=2,
+    retry_delay_seconds=60,
+    on_failure=[notify_on_failure],
+)
 def multi_experiment_analysis(experiments: list[dict]):
     logger = get_run_logger()
     logger.info(f"Analyzing {len(experiments)} experiments")

@@ -4,6 +4,7 @@ from typing import Optional
 
 from prefect import flow, get_run_logger
 
+from orchestration.notifications import notify_on_failure
 from orchestration.tasks.extract import extract_csv
 from orchestration.tasks.load import load_to_staging
 from orchestration.tasks.transform import calculate_metrics, run_dbt
@@ -24,7 +25,14 @@ MARKETING_EXPECTATIONS = [
 ]
 
 
-@flow(name="daily_metrics_pipeline", log_prints=True)
+@flow(
+    name="daily_metrics_pipeline",
+    log_prints=True,
+    retries=3,
+    retry_delay_seconds=60,
+    timeout_seconds=3600,
+    on_failure=[notify_on_failure],
+)
 def daily_metrics_pipeline(
     revenue_file: Optional[str] = None,
     marketing_file: Optional[str] = None,
@@ -50,7 +58,7 @@ def daily_metrics_pipeline(
     return results
 
 
-@flow(name="process_revenue_data")
+@flow(name="process_revenue_data", retries=2, retry_delay_seconds=30)
 def process_revenue_data(file_path: str, connection_string: Optional[str] = None):
     logger = get_run_logger()
 
@@ -79,7 +87,7 @@ def process_revenue_data(file_path: str, connection_string: Optional[str] = None
     }
 
 
-@flow(name="process_marketing_data")
+@flow(name="process_marketing_data", retries=2, retry_delay_seconds=30)
 def process_marketing_data(file_path: str, connection_string: Optional[str] = None):
     logger = get_run_logger()
 
@@ -107,7 +115,7 @@ def process_marketing_data(file_path: str, connection_string: Optional[str] = No
     }
 
 
-@flow(name="run_dbt_transforms")
+@flow(name="run_dbt_transforms", retries=2, retry_delay_seconds=60)
 def run_dbt_transforms():
     logger = get_run_logger()
 
